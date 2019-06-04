@@ -1,0 +1,139 @@
+                                                                                                                     
+######### things to do ##########
+
+##flags to add
+cal in/out
+cal command in/out
+emulator on/off
+scanning?
+acq_tel?
+gpstime recieving (have lock)
+weather
+
+
+## bugs
+
+make get_file_times work on simulator when talking to nuclear
+
+stepped el scan does more az sweeps in first iteration than subsequent ones
+
+
+code thinks elevation axis is done moving before it actually is
+
+stop button still doesnt work for horizontal scan (and possibly other things), it just goes to next loop iteration (I think)
+maybe put loops in an if statement and pass flag for return when you want to stop
+
+why does helical stop scanning in elevation sometimes?
+
+why does helical scan stop ~10 degrees before its upper limit?
+
+stepped el scan sometimes stops prematurely
+
+DIO board + aquisition board create second transfer request whenever I stop acq_tel, need to find way to force gui to recognize board number
+
+look into relation between offset and modulus to figure out why you get a 10 deg bump at zenith
+
+
+
+## most relavent:
+
+figure out right way to deal with not being able to work with old pointing files every time you add a new variable to pointing files
+
+set motor_off function to be able to only turn of X or Y motor individually
+
+set up plot_some_data to plot pointing file info
+
+check acq_tel averages directly in notebook and make sure they match up with what gui is saving.
+
+
+integrate DIO board for calibrator: set: put cal in, put cal out, emulate read: cal in, cal out (this is most important)
+
+figure out how to do multiple flags as a binary number
+
+
+use gpstime rather than datetime.utcnow() in planets.py for tracking, 
+modify convert_gpstime to work for one gpstime data point, use current computer time to get wrap number, use saved computer time in h5 files
+
+in create_lvl1 I made it so it would make a lvl1 file from all data in directory, but I might not want to use some
+of the available data for whatever reason (should therefore either enter flags which create_lvl1.py is conciousce 
+of or run the script just like I do in the notebook and select files manually)
+
+add button to clear all commands to galil
+
+
+## more relavent
+
+take out degrees to counts(maybe), have them be hard set in code
+
+maybe have box scan go up and come back down multiple times rather than multiple sweeps at one az then change el
+
+when skipping 'bad' elevation data points, it might be smart to set the limit based on discontinuity greater than difference
+greater than (deg/sec)*(time) between data points, rather than just el > 90 deg, because you could still be getting incorrect
+pointing data.
+
+figure out best way to automate calibration process
+add linear correction capability to gui for temp cals, i.e. convert a given voltage number to what it would be in the linear regime
+
+incorporate peters notebook functions into gui (../notebook/analyze_raw_acq_tel_2x) (notebook/greenpol_quicklook_samples)
+
+put a save button on live plots so you only save them when you want to (gui.py, pplot())
+
+maybe make plotting code able to see multiple days (gui.py plot)
+
+code to keep telescope from pointing below horizon needs higher limit than 0 (~6-7 degrees is the lowest the telescope can go)
+Also need to change upper limit to ~96.5 degrees
+
+maybe make servo correction loop, where if the final position is not within some distance of the intended
+position it corrects until it is (or just corrects a certain number of times)
+
+Figure out correct PID configuration
+
+add resolution as an argument to color plots
+
+figure out a better way to moniter level info than readline() in moniter function in gui, it currently skips data that comes in out of order, this has to do with the timing of the incoming data when your asking for it (gui.py)
+
+add elevation move speed
+
+## less relevant
+
+in plot_tool.py change loading/saving of last configuration to delte previous saved config file, you dont need to save all of them
+
+reorganize file structure
+
+might be worth adding cabibility to plot_tool to plot tilt vs azimuth
+
+look into making paths relative (rather than absolute)
+
+maybe flip color scales on color plots (make more negative red, rather than blue)
+
+forward/backward pass # comments are incorrect, jumps from 1 to 3, figure out the right way to do this(scan.py: linearScan() & horizontalScan())
+
+add functionality to find offsets (arrow keys that step in some defined increment, update offset each time you move, 
+so when you find the correct pointing the offset is however much you have moved, maybe do this in a seperate 
+notebook tab)
+
+
+it might be possible/better to combine the forward and backward passes into one block of code, use -1**i and a list for min/max az then do list[i % 2] or something like that (scan.py: linearScan() & horizontalScan())
+
+figure out if there is a better way to convert az el coordinates outputted by ephem into degrees(planets.py)
+
+put in logic that allows for different scan times at each elevation(scan.py: azScan())
+
+
+put in some logic to azScan to accept hours instead of seconds for tscan, maybe change the default to hours, then if input is less than one, have some logic to convert that to seconds, or maybe timdelta can just handle that. or have an option to do either and you have to specify at input, maybe a checkbox (scan.py, azScan)
+
+
+create an error/update message text box in gui, for things like elevation safety controls
+
+
+get_pointing.py is set up to write files every minute, logic will need to change if we want files more frequently
+
+should move realtime_gp into data_aquisition folder
+
+#development
+
+#commit notes:
+plot_tool now plots time since start on xaxis
+fixed bug in scan.py for odd number of az scans (need to double check that fix worked)
+Phidget temp wasnt plotting in plot_tool because it was commented out in realtime_gp
+got rid of some debugging comments in plot_tool

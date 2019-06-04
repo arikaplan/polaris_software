@@ -1,0 +1,94 @@
+(dp0
+S'Az Scan'
+p1
+(dp2
+S'Scan Elevations'
+p3
+S'None'
+p4
+sS'Scan Time'
+p5
+S'inf'
+p6
+ssS'Move Distance'
+p7
+(dp8
+S'el'
+p9
+S'0.0'
+p10
+sS'az'
+p11
+S'0.0'
+p12
+ssS'Move to Location'
+p13
+(dp14
+S'el'
+p15
+S'0.0'
+p16
+sS'az'
+p17
+S'0.0'
+p18
+ssS'Helical Scan'
+p19
+(dp20
+S'min el'
+p21
+S'40.0'
+p22
+sS'max el'
+p23
+S'50.0'
+p24
+sg5
+S'inf'
+p25
+ssS'Linear Scan'
+p26
+(dp27
+S'Min Az'
+p28
+S'-10.0'
+p29
+sS'Celestial Object'
+p30
+S'AZEL Sky-Coord'
+p31
+sS'Max Az'
+p32
+S'10.0'
+p33
+sS'Az Scan #'
+p34
+S'2'
+p35
+ssS'Horizontal Scan'
+p36
+(dp37
+S'Step Size'
+p38
+S'10.0'
+p39
+sS'Min El'
+p40
+S'-10.0'
+p41
+sg32
+S'10.0'
+p42
+sg28
+S'-10.0'
+p43
+sS'Max El'
+p44
+S'10.0'
+p45
+sg30
+S'AZEL Sky-Coord'
+p46
+sg34
+g35
+ss.
