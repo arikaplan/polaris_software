@@ -96,6 +96,9 @@ def get_h5_pointing(filelist,startrev=None, stoprev=None,angles_in_ints=False,az
 		hpointing=hpointing[hpointing['gpstime'] < stoprev]
 
 	hrevlist,inds=np.unique(hpointing['gpstime'],return_index=True)
+
+	psize = len(hpointing['el'][inds])
+
 	elmeans=hpointing['el'][inds]
 	azmeans=hpointing['az'][inds]
 	h1means = hpointing['H1'][inds]
@@ -107,11 +110,26 @@ def get_h5_pointing(filelist,startrev=None, stoprev=None,angles_in_ints=False,az
 	cryo4means = hpointing['Calibrator'][inds]
 	azlevmeans = hpointing['x tilt'][inds]
 	ellevmeans = hpointing['y tilt'][inds]
-	azoffsetmeans = hpointing['az offset'][inds]
-	eloffsetmeans = hpointing['el offset'][inds]
-	comptimemeans = hpointing['computer time'][inds]
-	flagmeans = hpointing['flag'][inds]
-	phtempmeans = hpointing['Phidget Temp'][inds]
+	try:
+		azoffsetmeans = hpointing['az offset'][inds]
+	except:
+		azoffsetmeans = np.zeros(psize)
+	try:
+		eloffsetmeans = hpointing['el offset'][inds]
+	except:
+		eloffsetmeans = np.zeros(psize)
+	try:
+		comptimemeans = hpointing['computer time'][inds]
+	except:
+		comptimemeans = np.zeros(psize)
+	try:
+		flagmeans = hpointing['flag'][inds]
+	except:
+		flagmeans = np.zeros(psize)
+	try:
+		phtempmeans = hpointing['Phidget Temp'][inds]
+	except:
+		phtempmeans = np.zeros(psize)
 	#("az offset", np.float), ("el offset", np.float), ("computer time", np.float), ("flag", np.int)])
 
 	#get rid of az outliers:
