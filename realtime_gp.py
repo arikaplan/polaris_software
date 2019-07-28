@@ -340,8 +340,9 @@ def chantoname(chan):
         'ch2': 'H1 Lo AC', 'ch3': 'H1 Lo DC', 'ch4': 'H2 Hi AC',
         'ch5': 'H2 Hi DC', 'ch6': 'H2 Lo AC', 'ch7': 'H2 Lo DC',
         'ch8': 'H3 Hi AC', 'ch9': 'H3 Hi DC', 'ch10': 'H3 Lo AC',
-        'ch11': 'H3 Lo DC', 'ch12': 'Backend TSS', 'ch13': 'Amplifier',
-        'ch14': 'Cooler', 'ch15': 'Calibrator', 'ch16':'az'}
+        'ch11': 'H3 Lo DC', 'ch12':'Amplif','ch13':'Cooler',
+        'ch14':'az', 'ch15':'el','ch16':'Backen', 'ch17':'Calibr',
+        'ch18':'x_tilt','ch19':'y_tilt','ch20':'Phidgit'}
 
     name = names[chan]
 
@@ -351,13 +352,15 @@ def nametochan(name):
     #function to convert channel numbers to channel names
 
     #names of each channel
-    chans = {
-        'all': 'all',  'H1HiAC':'ch0',  'H1HiDC':'ch1',
-        'H1LoAC':'ch2' ,  'H1LoDC':'ch3 ', 'H2HiAC':'ch4' ,
-        'H2HiDC':'ch5' ,  'H2LoAC':'ch6',  'H2LoDC':'ch7',
-        'H3HiAC':'ch8', 'H3HiDC':'ch9',  'H3LoAC':'ch10',
-         'H3LoDC':'ch11', 'Backend TSS':'ch12', 'Amplifier': 'ch13',
-        'Cooler':'ch14', 'Calibrator':'ch15', 'az':'ch16'}
+     chans = {
+    'all': 'all',  'H1HiAC':'ch0',  'H1HiDC':'ch1',
+    'H1LoAC':'ch2' ,  'H1LoDC':'ch3', 'H2HiAC':'ch4' ,
+    'H2HiDC':'ch5' ,  'H2LoAC':'ch6',  'H2LoDC':'ch7',
+    'H3HiAC':'ch8', 'H3HiDC':'ch9',  'H3LoAC':'ch10',
+     'H3LoDC':'ch11','Amplif': 'ch12',
+    'Cooler':'ch13','az':'ch14', 'el':'ch15',
+    'Backen':'ch16', 'Calibr':'ch17','x_tilt':'ch18',
+    'y_tilt':'ch19','Phidgit':'ch20'}
 
     chan = chans[name]
 

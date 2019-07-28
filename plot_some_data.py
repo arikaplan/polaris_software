@@ -49,8 +49,10 @@ def nametochan(name):
 	'H1LoAC':'ch2' ,  'H1LoDC':'ch3', 'H2HiAC':'ch4' ,
 	'H2HiDC':'ch5' ,  'H2LoAC':'ch6',  'H2LoDC':'ch7',
 	'H3HiAC':'ch8', 'H3HiDC':'ch9',  'H3LoAC':'ch10',
-	 'H3LoDC':'ch11', 'HornTo':'ch12', 'Amplif': 'ch13',
-	'Cooler':'ch14', 'Transi':'ch15' }#'az':'ch16'}
+	 'H3LoDC':'ch11','Amplif': 'ch12',
+	'Cooler':'ch13','az':'ch14', 'el':'ch15',
+    'Backen':'ch16', 'Calibr':'ch17','x_tilt':'ch18',
+    'y_tilt':'ch19','Phigit':'ch20'}
 
     chan = chans[name]
     return chan
@@ -82,13 +84,13 @@ def mk_pseudomap(indata,sampsperline=256):
     indata_ps=np.reshape(indata[:ns],(nlines,sampsperline))
     return indata_ps
 
-def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T',samprate=30,minfreq=.1):
-    sampsperspec_sgram_d=1024
-    sampsperspec_sgram_r=8192
+def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T',samprate=30,minfreq=.1): #function that creates the tkinter module and plots everything
+    sampsperspec_sgram_d=1024  #samples per spectrogram demod data?
+    sampsperspec_sgram_r=8192  #samples per spectrogram raw data?
     sampsperline_d=1800 #assume in demod data looking per file-ish or per rotation-ish
     sampsperline_r=256  #assume in raw data you want to see phase singnal per rev
  
-    if filelist==None:
+    if filelist==None:  #Initial window that asks for files
         root=Tk()
         if datatype=='demod':
             filelist = list(tkFileDialog.askopenfilenames(initialdir='C:/Users/nlynn/Documents/Research/POLARIS/cosmology/data/demod_data',parent=root,title='Choose a set of files'))
@@ -98,29 +100,31 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
         root.destroy()
     else:
         filelist.sort()
-    main = Tk()
-    main.title("Choose channels to plot")
-    main.geometry("+50+150")
-    frame = ttk.Frame(main, padding=(3, 3, 12, 12))
-    frame.grid(column=0, row=0, sticky=(N, S, E, W))
+    main = Tk() #instantiates tkinter as 'main'
+    main.title("Choose channels to plot") #title of tkinter window
+    main.geometry("+50+150") #size of window?
+    frame = ttk.Frame(main, padding=(3, 3, 12, 12)) #instantiates frame and size 
+    frame.grid(column=0, row=0, sticky=(N, S, E, W)) #instantiates grid 
 
     #set up the listbox to choose what chans to plot
     chan_labels = StringVar()
     chan_labels.set("H1HiAC_T H1HiAC_Q H1HiAC_U H1HiDC H1LoAC_T H1LoAC_Q H1LoAC_U H1LoDC\
                     H2HiAC_T H2HiAC_Q H2HiAC_U H2HiDC H2LoAC H2LoDC\
                     H3HiAC_T H3HiAC_Q H3HiAC_U H3HiDC H3LoAC_T H3LoAC_Q\
-                    H3LoAC_U H3LoDC HornTop Amplifier Cooler Transition az")
+                    H3LoAC_U x_tilt y_tilt Phigit_Temp")
     chan_labels2 = StringVar()
-    chan_labels2.set("az el Backend_TSS Amplifier \
-Cooler Calibrator x_tilt y_tilt gpstime Phigit_Temp")  #all of these need to be 6 characters at least
+    chan_labels2.set("H1HiAC_T H1HiAC_Q H1HiAC_U H1HiDC H1LoAC_T H1LoAC_Q H1LoAC_U H1LoDC\
+                    H2HiAC_T H2HiAC_Q H2HiAC_U H2HiDC H2LoAC H2LoDC\
+                    H3HiAC_T H3HiAC_Q H3HiAC_U H3HiDC H3LoAC_T H3LoAC_Q\
+                    H3LoAC_U H3LoDC Amplifier Cooler az el Backend_TSS\
+                    Calibrator x_tilt y_tilt Phigit_Temp")  #all of these need to be 6 characters at least
     chan_labels3 = StringVar()
     chan_labels3.set("H1HiAC_T H1HiAC_Q H1HiAC_U H1HiDC H1LoAC_T H1LoAC_Q H1LoAC_U H1LoDC\
                     H2HiAC_T H2HiAC_Q H2HiAC_U H2HiDC H2LoAC H2LoDC\
                     H3HiAC_T H3HiAC_Q H3HiAC_U H3HiDC H3LoAC_T H3LoAC_Q\
-                    H3LoAC_U H3LoDC HornTop Amplifier Cooler Transition\
-                    el Backend_TSS Amplifier Cooler Calibrator x_tilt y_tilt gpstime Phigit_Temp")
+                    H3LoAC_U H3LoDC Amplifier Cooler Backend_TSS Calibrator Phigit_Temp")
     
-    tlist=[]
+    tlist=[] #figure out what all this formula stuff is doing
     if datatype=='demod':
         dlist=[]
         mxminute = 0
@@ -140,11 +144,11 @@ Cooler Calibrator x_tilt y_tilt gpstime Phigit_Temp")  #all of these need to be 
                 if m<=miminute:
                     mihour = int(h)
                     miminute = int(m )
-            hf=h5py.File(f)
-            t=h+m/60.+(s+(hf['demod_data']['rev']-hf['demod_data']['rev'][0])/1000.)/3600.
-            tlist.append(t)  #just generate a time to plot relative to
-            dlist.append(hf['demod_data'])
-        d=np.concatenate(dlist)
+            hf=h5py.File(f) #opens file
+            t=h+m/60.+(s+(hf['demod_data']['rev']-hf['demod_data']['rev'][0])/1000.)/3600. #Gives file times inbetween for one file
+            tlist.append(t)  #just generate a time to plot relative to   Time list
+            dlist.append(hf['demod_data']) #data list
+        d=np.concatenate(dlist) #d is full data list
         hf.close()
         miminute = miminute -1
         mxminute = mxminute +1
@@ -166,32 +170,39 @@ Cooler Calibrator x_tilt y_tilt gpstime Phigit_Temp")  #all of these need to be 
         tlist.append(t)
     ut=np.concatenate(tlist)
     ut = sorted(ut)
-   
-#sig vs time
-    lstbox = Listbox(frame,listvariable=chan_labels, selectmode=MULTIPLE, width=20, height=38)
+
+#instantiate listboxes for each column 
+
+    #sig vs time
+    lstbox = Listbox(frame,listvariable=chan_labels2, selectmode=MULTIPLE, width=20, height=38)
     lstbox.grid(column=0, row=0, columnspan=2)
 
     #power spectrum vs time
-    lstbox2 = Listbox(frame,listvariable=chan_labels, selectmode=MULTIPLE, width=20, height=38)
+    lstbox2 = Listbox(frame,listvariable=chan_labels3, selectmode=MULTIPLE, width=20, height=38)
     lstbox2.grid(column=2, row=0, columnspan=2)
 
-        
-    lstbox3 = Listbox(frame,listvariable=chan_labels, selectmode=SINGLE, width=20, height=38)
+    #spectrogram    
+    lstbox3 = Listbox(frame,listvariable=chan_labels3, selectmode=SINGLE, width=20, height=38)
     lstbox3.grid(column=4, row=0, columnspan=2)
     
+    #psudomap
     lstbox4 = Listbox(frame,listvariable=chan_labels, selectmode=SINGLE, width=20, height=38)
     lstbox4.grid(column=6, row=0, columnspan=2)
 
-    lstbox5 = Listbox(frame,listvariable=chan_labels, selectmode=SINGLE, width=20, height=38)
+    #sig vs az vs rev
+    lstbox5 = Listbox(frame,listvariable=chan_labels, selectmode=MULTIPLE, width=20, height=38)
     lstbox5.grid(column=8, row=0, columnspan=2)
 
-    lstbox6 = Listbox(frame,listvariable=chan_labels, selectmode=SINGLE, width=20, height=38)
+    #sig vs az vs el
+    lstbox6 = Listbox(frame,listvariable=chan_labels, selectmode=MULTIPLE, width=20, height=38)
     lstbox6.grid(column=10, row=0, columnspan=2)
 
-    lstbox7 = Listbox(frame,listvariable=chan_labels2, selectmode=MULTIPLE, width=20, height=38)
-    lstbox7.grid(column=12, row=0, columnspan=2)
+    #pointing file info
+    #lstbox7 = Listbox(frame,listvariable=chan_labels2, selectmode=MULTIPLE, width=20, height=38)
+    #lstbox7.grid(column=12, row=0, columnspan=2)
   
-    lstbox8 = Listbox(frame,listvariable=chan_labels3, selectmode=MULTIPLE, width=20, height=38)
+    #scidata vs az
+    lstbox8 = Listbox(frame,listvariable=chan_labels2, selectmode=MULTIPLE, width=20, height=38)
     lstbox8.grid(column=14, row=0, columnspan=2)
     #start the plot
 
@@ -200,8 +211,8 @@ Cooler Calibrator x_tilt y_tilt gpstime Phigit_Temp")  #all of these need to be 
     mm=os.path.dirname(filelist[0])[-4:-2]
     dd=os.path.dirname(filelist[0])[-2:]
     yrmoday = ''+yyyy+mm+dd
-    fpath = 'C:/Users/nlynn/Documents/Research/POLARIS/cosmology/data'
-    
+    fpath = os.path.dirname(os.path.dirname(os.path.dirname(fname)))
+    print(fpath)
 
     def selectpft():
         reslist = list()
@@ -313,19 +324,26 @@ Cooler Calibrator x_tilt y_tilt gpstime Phigit_Temp")  #all of these need to be 
             entry = lstbox.get(i)
             reslist.append(entry)
         for val in reslist:
-            chan=nametochan(val[:6])
-            if datatype=='demod':
-                component=val[-1]
-                if chan == 'ch16':
-                    component 
-                if ((component != 'T') and (component != 'Q') and (component != 'U')) and chan != 'ch16':
-                    component='T'
-                
-                plt.plot(ut,d[chan][component],label=val)
-                plt.xlabel('Hour')
-            if datatype=='raw':
-                plt.plot(d[chan].flatten(),label=val)
-                plt.xlabel('Samples')
+            if "el Backend_TSS Calibrator x_tilt y_tilt gpstime Phidget_Temp".find(val[:6])!=-1:
+                y=rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))[val]             
+                t=rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))['gpstime']   
+                display_pointing=rt.pointing_plot(val,y,t)
+            else:
+                chan=nametochan(val[:6])
+                if datatype=='demod':
+                    component=val[-1]
+                    '''if chan == 'ch16':
+                        component '''
+                    if ((component != 'T') and (component != 'Q') and (component != 'U')) and chan != 'ch16':
+                        component='T'
+                    print(component,chan)
+                    plt.plot(ut,d[chan][component],label=val)
+
+                    plt.xlabel('Hour')
+
+                if datatype=='raw':
+                    plt.plot(d[chan].flatten(),label=val)
+                    plt.xlabel('Samples')
             plt.ylabel('Output [v]')
             plt.legend()
             plt.show(block=False)
@@ -428,17 +446,17 @@ Cooler Calibrator x_tilt y_tilt gpstime Phigit_Temp")  #all of these need to be 
     btn3 = ttk.Button(frame, text="Select for Spectrogram", command=selectsgram)
     btn3.grid(column=5, row=1)
     
-    btn4 = ttk.Button(frame, text="Select for Pseudomap", command=selectpseudomap)
+    btn4 = ttk.Button(frame, text="Select for Pseudomap",  command=selectpseudomap)
     btn4.grid(column=7, row=1) 
 
-    btn5 = ttk.Button(frame, text="Select for sig vs az vs rev", command=selectsigvsazvsrev)
+    btn5 = ttk.Button(frame, text="Select for sig vs az vs rev",  command=selectsigvsazvsrev)
     btn5.grid(column=9, row=1) 
 
-    btn6 = ttk.Button(frame, text="Select for sig vs az vs el", command=selectsigvsazvsel)
+    btn6 = ttk.Button(frame, text="Select for sig vs az vs el",  command=selectsigvsazvsel)
     btn6.grid(column=11, row=1)
 
-    btn7 = ttk.Button(frame, text="Select for pointing file info", command=selectpft)
-    btn7.grid(column=13, row=1)
+    #btn7 = ttk.Button(frame, text="Select for pointing file info",  command=selectpft)
+    #btn7.grid(column=13, row=1)
 
     btn8 = ttk.Button(frame, text="Select for scidata vs az", command=selectsigvsaz)
     btn8.grid(column=15, row=1) 
