@@ -2,6 +2,7 @@
 set of scripts to run while taking data for first look analysis
 (run from main ground_cofe directory so paths work out right"""
 import sys
+import os
 #sys.path.append('telescope_control')
 sys.path.append('utils_meinhold')
 sys.path.append('utils_zonca')
@@ -270,8 +271,9 @@ def get_demodulated_data_from_list(filelist,freq=10,supply_index=False,phase_off
 	return np.concatenate(dd)
 
 def get_file_times(fld):
-	startfile = fld[0][:65] + fld[0][71:-2] + 'dat'
-	endfile = fld[-1][:65] + fld[-1][71:-2] + 'dat'
+	print fld
+	startfile = fld[0][:65] + fld[0][65:-2] + 'dat'
+	endfile = fld[-1][:65] + fld[-1][65:-2] + 'dat'
 
 	# starttime = os.path.getctime(startfile)
 	starttime = os.stat(startfile).st_mtime
@@ -408,9 +410,9 @@ def get_all_demodulated_data(fld_demod, fld):
         print 'need at least one array!!!!!!!!!'
 
 def get_file_times(fld):
-	startfile = fld[0][:65] + fld[0][71:-2] + 'dat'
-	endfile = fld[-1][:65] + fld[-1][71:-2] + 'dat'
-
+	startfile = fld[0][:43] + fld[0][49:-2] + 'dat'
+	endfile = fld[-1][:43] + fld[-1][49:-2] + 'dat'
+	
 	# starttime = os.path.getctime(startfile)
 	starttime = os.stat(startfile).st_mtime
 	starttime = datetime.datetime.fromtimestamp(starttime)
@@ -893,15 +895,16 @@ def pointing_plot(var,vector,gpstime):
 	plt.show()
 
 def linearize_Vexp(Vexp,horn,params='2'):
+	#print os.getcwd(), '!!!!!!!!!!!!!!'
+	#fpath='../configurations/compression_calibrations/'
 
-	fpath='configurations/compression_calibrations/'
-	os.chdir(fpath)
+	#os.chdir(fpath)
 	
 	#read all the saved entries
 	if not isinstance(params,basestring):
 		params = str(params)
 
-	with open('fit_params%s' % params +'.txt', 'r') as handle:
+	with open('../configurations/compression_calibrations/fit_params%s' % params +'.txt', 'r') as handle:
 		pars=pickle.loads(handle.read())
 
     	m = pars['linpars%d' % horn][1]
@@ -992,8 +995,11 @@ if __name__=="__main__":
 	#plotnow(fpath,yrmoday,chan,var,18,15,23,59)
 	#y=get_h5_pointing(select_h5(fpath,yrmoday,hour1,minute1,
 	#                                        hour2,minute2))[var]
-	print linearize_Vexp(np.array([-0.7, -0.25, -1.8]), 1)					
+	#print linearize_Vexp(np.array([-0.7, -0.25, -1.8]), 1)					
 	#t=get_h5_pointing(select_h5(fpath,yrmoday,hour1,minute1,
 	#                                        hour2,minute2))['gpstime']
-
+	times = ['D:/software_git_repos/Polaris/polaris_data/demod_data/20190809/05180200.dat', 'D:/software_git_repos/Polaris/polaris_data/demod_data/20190809/05235400.dat']
+	starttime, endtime = get_file_times(times)
+	print starttime, endtime
+	print type(starttime)
 	#pointing_plot(var,y,t)
