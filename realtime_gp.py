@@ -115,9 +115,9 @@ def get_h5_pointing(filelist,startrev=None, stoprev=None,angles_in_ints=False,az
         comptimemeans = hpointing['computer time'][inds]
         flagmeans = hpointing['flag'][inds]
         try:
-                phtempmeans = hpointing['Phidget_Temp'][inds]
+                phtempmeans = hpointing['Phidget Temp'][inds]
         except:
-                phtempmeans = 0
+                phtempmeans = []
         #("az offset", np.float), ("el offset", np.float), ("computer time", np.float), ("flag", np.int)])
 
         #get rid of az outliers:
@@ -278,10 +278,9 @@ def combine_cofe_h5_pointing(dd, h5pointing, outfile='combined_data.pkl'):
     """
         paz = h5pointing['az'].copy()
         prev = h5pointing['gpstime'].copy()
-
+        
         # need to use only 24 bits for comparison with science data gpstime- probably a better way to do this, bitmasking?
         prev &= 0x00ffffff
-
         # find all gpstime wrap points in current data set
         gpsdiff1 = np.diff(dd['rev'])
         gpsdiff2 = np.diff(prev)
@@ -342,7 +341,7 @@ def chantoname(chan):
         'ch8': 'H3 Hi AC', 'ch9': 'H3 Hi DC', 'ch10': 'H3 Lo AC',
         'ch11': 'H3 Lo DC', 'ch12':'Amplif','ch13':'Cooler',
         'ch14':'az', 'ch15':'el','ch16':'Backen', 'ch17':'Calibr',
-        'ch18':'x_tilt','ch19':'y_tilt','ch20':'Phidgit'}
+        'ch18':'x_tilt','ch19':'y_tilt','ch20':'Phidget'}
 
     name = names[chan]
 
@@ -352,7 +351,7 @@ def nametochan(name):
     #function to convert channel numbers to channel names
 
     #names of each channel
-     chans = {
+    chans = {
     'all': 'all',  'H1HiAC':'ch0',  'H1HiDC':'ch1',
     'H1LoAC':'ch2' ,  'H1LoDC':'ch3', 'H2HiAC':'ch4' ,
     'H2HiDC':'ch5' ,  'H2LoAC':'ch6',  'H2LoDC':'ch7',
@@ -360,7 +359,7 @@ def nametochan(name):
      'H3LoDC':'ch11','Amplif': 'ch12',
     'Cooler':'ch13','az':'ch14', 'el':'ch15',
     'Backen':'ch16', 'Calibr':'ch17','x_tilt':'ch18',
-    'y_tilt':'ch19','Phidgit':'ch20'}
+    'y_tilt':'ch19','Phidget':'ch20'}
 
     chan = chans[name]
 
@@ -608,8 +607,8 @@ def plotnow_azrevsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,
         plt.title('%s %s data binned to azimuth and revolution #, date %s, %s:%d - %s:%d' % (name, var, yrmoday, st_hour, int(st_minute), ed_hour, int(ed_minute)))
         plt.grid()
         plt.show()
-        
-def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
+
+def plotnow_azrevsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
         flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         i=0
@@ -619,12 +618,120 @@ def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,s
 
         pp=get_h5_pointing(flp)
         #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
-        dd=get_all_demodulated_data(fld_demod, fld)     
-        combined=combine_cofe_h5_pointing(dd,pp)
+        dd=get_all_demodulated_data(fld_demod, fld)
+        #combined=combine_cofe_h5_pointing(dd,pp)
+        
+        #synchronized data and az values
+        az1 = get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))['az']
+        data1 = get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))[chan] 
+        print('az1', az1)
+        print('data1', data1)
+        steps = len(data1)
+        
+        #convert to temp for cryo sensors
+        if chan == 12:
+                data1 = data1*10. + 273.15
+        if chan == 13:
+                data1 = convert.convert(data1, 'e')
+        if chan == 14:
+                data1 = convert.convert(data1, 'h')
+        if chan == 15:
+                data1 = data1*10. + 273.15
+        
+        #resolution
+        dx = 1.0
+        dy = 1.0
+        
+        #set up empty lists to append each revolution to
+        data = []
+        az = []
+        iaz = [0]
+        rev = 0
+        
+        #determine indices in azimuth/data array which correspond to a new revolution of the telescope
+        for i in range(steps):
+                #round values to resolution for comparison later
+                az1[i] = round_fraction(az1[i], dx)
+                if i > 0:
+                        if abs(az1[i] - az1[i-1]) >= 180.:
+                                iaz.append(i)
+                                rev += 1
+        
+        #append each revolution array to a list     
+        for j in range(rev):
+                az.append(az1[iaz[j]:iaz[j+1]])
+                data.append(data1[iaz[j]:iaz[j+1]])
+        
+        #append the last revolution
+        data.append(data1[iaz[-1]:])
+        az.append(az1[iaz[-1]:])
+        rev += 1
+
+        data = np.asarray(data)
+        az = np.asarray(az)
+        
+        #create grid for plotting
+        x, y = np.arange(0., 360.+dx, dx), np.arange(0., rev - 1 + dy, dy)
+        AZ, REV = np.meshgrid(x, y)
+        
+        #set up empty array
+        z = np.zeros(len(x)*len(y))
+        sig = np.reshape(z, (len(y), len(x)))
+        
+        #small number for comparing floats
+        epsilon = 1e-6
+        
+        #fill signal array with data points
+        for r in range(rev):
+                for a in range(len(x)):
+                        #find indices where combined azimuth data fits on x grid
+                        idx = np.where(abs(az[r] - x[a]) < epsilon)[0]
+                        #if idx length is 0 this will create a mask on that point, in idx len > 1, avg data points in the same bin
+                        sig[r][a] = data[r][idx].mean()
+        
+        #mask invalid values, i.e. where there are no data points
+        sig = ma.masked_invalid(sig)
+                
+        #change units on plot label
+        if chan != 'Phidge':
+                unit = 'deg'
+
+        else:
+                unit = 'K' 
+        
+        name = chan 
+
+        plt.pcolormesh(AZ, REV, sig)
+        plt.colorbar(label = 'Signal, %s' % unit)
+        plt.clim(data1.min(),data1.max())
+        plt.axis([0., 360., 0., rev - 1])
+        plt.ylabel('revolution #')
+        plt.xlabel('azimuth (deg)')
+        plt.title('%s %s data binned to azimuth and revolution #, date %s, %s:%d - %s:%d' % (name, var, yrmoday, st_hour, int(st_minute), ed_hour, int(ed_minute)))
+        plt.grid()
+        plt.show()
+
+def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
+        flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        #print('flp',flp)
+        #print('fld_demod', fld_demod)
+        #print('fld',fld)
+        i=0
+        while len(flp)<3:
+                i+=1
+                flp=select_h5(fpath,yrmoday,st_hour,int(st_minute)-i,ed_hour,int(ed_minute)+i)
+
+        pp=get_h5_pointing(flp)
+        #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
+        dd=get_all_demodulated_data(fld_demod, fld) 
+        #print('dd', dd)    
+        combined=combine_cofe_h5_pointing(dd,pp) #why exactly is this combine needed?
         
         #synchronized data az and el values
         az1, el1 = combined['az'], combined['el']
         data = combined['sci_data'][chan][var]
+           
         
         #convert to temp for cryo sensors
         if chan == 12:
@@ -635,7 +742,6 @@ def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,s
                 data = convert.convert(data, 'h')
         if chan == 15:
                 data = data*10. + 273.15
-        
         steps = len(data)
         
         #set az/el resolution
@@ -682,10 +788,102 @@ def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,s
         #change units on plot label
         if int(chan[2:]) < 12:
                 unit = 'V'
+
         else:
                 unit = 'K' 
         
         name = chantoname(chan)
+
+        plt.pcolormesh(AZ, EL, sig)
+        plt.colorbar(label = 'Signal, %s' % unit)
+        plt.clim(data.min(),data.max())
+        plt.axis([AZ.min(), AZ.max(), EL.min(), EL.max()])
+        #plt.axis([0., 360., 0., 90.])
+        plt.ylabel('elevation (deg)')
+        plt.xlabel('azimuth (deg)')
+        plt.title('%s %s data binned to azimuth and elevation, date %s, %s:%d - %s:%d' % (name, var, yrmoday, st_hour, int(st_minute), ed_hour, int(ed_minute)))
+        plt.grid()
+        plt.show()
+
+def plotnow_azelsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False): #added to try to fix ploting 
+        flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        
+        i=0
+        while len(flp)<3:
+                i+=1
+                flp=select_h5(fpath,yrmoday,st_hour,int(st_minute)-i,ed_hour,int(ed_minute)+i)
+
+        #pp=get_h5_pointing(flp)
+        #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
+        #dd=get_all_demodulated_data(fld_demod, fld)     
+        #combined=combine_cofe_h5_pointing(dd,pp)
+        
+        #synchronized data az and el values
+        az1, el1 = get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))['az'], get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))['el']
+        
+        data = get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))[chan]   
+        
+        #convert to temp for cryo sensors
+        if chan == 12:
+                data = data*10. + 273.15
+        if chan == 13:
+                data = convert.convert(data, 'e')
+        if chan == 14:
+                data = convert.convert(data, 'h')
+        if chan == 15:
+                data = data*10. + 273.15
+        steps = len(data)
+        
+        #set az/el resolution
+        dx = 1.0
+        dy = 1.0
+        
+        #set up bins/grid
+        x, y = np.arange(0., 360.+dx, dx), np.arange(0., 90. + dy, dy)
+        AZ, EL = np.meshgrid(x, y)
+        
+        #small number for comparing floats
+        epsilon = 1e-6
+        
+        #set up matrix for signal 
+        z1 = np.zeros(len(x)*len(y))
+        sig = np.reshape(z1, (len(y), len(x)))
+        
+        #set up matrix for keeping track of data points in single bin for averaging
+        z2 = np.zeros(len(x)*len(y))
+        count = np.reshape(z2, (len(y), len(x)))
+
+        for i in range(steps):
+         
+                #round az/el points for comparison with grid        
+                el1[i] = round_fraction(el1[i], dy)
+                az1[i] = round_fraction(az1[i], dx)  
+        
+                #find where data points belong in grid
+                iel = np.where(abs(y - el1[i]) < epsilon)[0][0]
+                iaz = np.where(abs(x - az1[i]) < epsilon)[0][0]
+        
+                #add 1 each time data point lands in same bin
+                count[iel][iaz] += 1
+        
+                #add total number of data values in bin
+                sig[iel][iaz] = sig[iel][iaz] + data[i]  
+
+        #mask 0 count values so they dont show up in color plot
+        count = ma.masked_where(count == 0.0, count)
+        
+        #take average of all data points in single bin
+        sig = sig/count
+        
+        #change units on plot label
+        if chan != 'Phidge':
+                unit = 'deg'
+
+        else:
+                unit = 'K' 
+        
+        name = chan
 
         plt.pcolormesh(AZ, EL, sig)
         plt.colorbar(label = 'Signal, %s' % unit)
