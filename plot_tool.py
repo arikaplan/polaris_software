@@ -8,7 +8,7 @@ sys.path.append('data_acquisition/IO_3001_USB_acquisition')
 sys.path.append('VtoT')
 import os
 #sys.path.append('VtoT')
-import gclib
+#import gclib
 import threading
 import time
 from time import strftime

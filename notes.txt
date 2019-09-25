@@ -45,10 +45,8 @@ set up plot_some_data to plot pointing file info
 
 check acq_tel averages directly in notebook and make sure they match up with what gui is saving.
 
+add ability to plot emulator,gpslock, calibrator status to plot tools
 
-integrate DIO board for calibrator: set: put cal in, put cal out, emulate read: cal in, cal out (this is most important)
-
-figure out how to do multiple flags as a binary number
 
 
 use gpstime rather than datetime.utcnow() in planets.py for tracking, 
@@ -133,7 +131,7 @@ should move realtime_gp into data_aquisition folder
 #development
 
 #commit notes:
-plot_tool now plots time since start on xaxis
-fixed bug in scan.py for odd number of az scans (need to double check that fix worked)
-Phidget temp wasnt plotting in plot_tool because it was commented out in realtime_gp
-got rid of some debugging comments in plot_tool
+added new script to make lvl 1 files that selects files like plot tool, need to add automatic selection of pointing files
+added sedgwick location to pointing files
+updated linearize_Vexp so that it will change back to original directory after completing
+
