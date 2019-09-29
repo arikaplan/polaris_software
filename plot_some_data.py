@@ -210,7 +210,7 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
     mm=os.path.dirname(filelist[0])[-4:-2]
     dd=os.path.dirname(filelist[0])[-2:]
     yrmoday = ''+yyyy+mm+dd
-    print('yrmoday',yrmoday)
+    #print('yrmoday',yrmoday)
     fpath = os.path.dirname(os.path.dirname(os.path.dirname(fname)))
 
 
@@ -231,30 +231,33 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
                 y=rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))[val]             
                 t=rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))['gpstime']   
                 display_pointing=rt.pointing_plot(val,y,t)
+                yaxis = "V" 
+
             elif "Phidget_Temp".find(val)!=-1:
-                #try:
+                
                 y=rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))[val]             
                 t=rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))['gpstime']  
                 display_pointing=rt.pointing_plot(val,y,t)
-                #except:
-                #    print('error Phidget_Temp does not work with this data set')
+                yaxis = 'K'
+             
                     
             else:
                 chan=nametochan(val[:6])
                 if datatype=='demod':
                     component=val[-1]
-                    '''if chan == 'ch16':
-                        component '''
+
                     if ((component != 'T') and (component != 'Q') and (component != 'U')) and chan != 'ch16':
                         component='T'
                     plt.plot(ut,d[chan][component],label=val)
-
-                    plt.xlabel('Hour')
-
+                    if chan == 'Cooler' or 'Amplifier':
+                        yaxis = 'K'
+                    
                 if datatype=='raw':
                     plt.plot(d[chan].flatten(),label=val)
                     plt.xlabel('Samples')
-            plt.ylabel('Output [v]')
+
+            plt.xlabel('Hour')
+            plt.ylabel('Output %s'  % yaxis)
             plt.legend()
             plt.show(block=False)
 
@@ -391,13 +394,12 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
 
             if "el Backend_TSS Calibrator x_tilt y_tilt gpstime".find(val[:6])!=-1:
                 rt.plotnow_azrevsig2(fpath=fpath,yrmoday=yrmoday,chan=val,var=component,st_hour=mihour,st_minute=miminute,ed_hour=mxhour,ed_minute=mxminute)
-            elif "Phidget_Temp":
+            elif "Phidget_Temp".find(val[:6])!=-1:
                 try: 
                     rt.plotnow_azrevsig2(fpath=fpath,yrmoday=yrmoday,chan=val,var=component,st_hour=mihour,st_minute=miminute,ed_hour=mxhour,ed_minute=mxminute)
                 except:
                     print('error Phidget_Temp is not working with this data set')
-                    
-            else:
+            else:       
                 rt.plotnow_azrevsig(fpath=fpath,yrmoday=yrmoday,chan=chan,var=component,st_hour=mihour,st_minute=miminute,ed_hour=mxhour,ed_minute=mxminute)
             
         plt.show(block=False)

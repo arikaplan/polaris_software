@@ -226,7 +226,7 @@ def get_h5_pointing_old(filelist,startrev=None, stoprev=None,angles_in_ints=Fals
         return {'el':elmeans,'az':azmeans,'gpstime':hrevlist}
 
 
-def get_demodulated_data_from_list(filelist,freq=10,supply_index=False,phase_offset=0):
+def get_demodulated_data_from_list(filelist,freq=10,supply_index=False,phase_offset=0): #***********
         filelist.sort() #just in case
         
         dd=[]
@@ -282,6 +282,7 @@ def combine_cofe_h5_pointing(dd, h5pointing, outfile='combined_data.pkl'):
         # need to use only 24 bits for comparison with science data gpstime- probably a better way to do this, bitmasking?
         prev &= 0x00ffffff
         # find all gpstime wrap points in current data set
+        print('dd', type(dd))
         gpsdiff1 = np.diff(dd['rev'])
         gpsdiff2 = np.diff(prev)
         iwrap1 = np.where(gpsdiff1 < -2 ** 24 / 1000 / 2)[0]
@@ -412,13 +413,16 @@ def get_file_times(fld):
 
 def plotnow(fpath,yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
         """
+        plots scidata vs az
+        
         function to automatically read last 2 science files and last few pointing
         files, combine and plot signal vs azimuth. yrmoday should be a string
         '20130502' fpath should point to the 
         spot where acq_tel and converter.py were run
         """
         flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
-        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld = []
         i=0
         while len(flp)<3:
                 i+=1
@@ -437,19 +441,16 @@ def plotnow(fpath,yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,su
         xa = sorted(xa)
         
         #convert to temp for cryo sensors
-        if chan == 12:
-                data = data*10. + 273.15
         if chan == 13:
                 data = convert.convert(data, 'e')
-        if chan == 14:
+        if chan == 12:
                 data = convert.convert(data, 'h')
-        if chan == 15:
-                data = data*10. + 273.15
+        
         #change units on plot label
-        if int(chan[2:]) < 12:
-                unit = 'V'
+        if int(chan[2:]) == 12 or 13 or 20:
+                unit = 'K'
         else:
-                unit = 'K' 
+                unit = 'V' 
 
         name = chantoname(chan)
 
@@ -463,12 +464,13 @@ def plotnow(fpath,yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,su
         % (var, xaxis, yrmoday, st_hour, int(st_minute), ed_hour, int(ed_minute))) 
         plt.legend()
         plt.grid()
-        plt.show()
+        #plt.show()
         return combined
 
 def plotnow_all(fpath,yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
         flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
-        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld_demod=select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld = []
         i=0
         while len(flp)<3:
                 i+=1
@@ -510,19 +512,18 @@ def round_fraction(number, res):
         
 def plotnow_azrevsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
         flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
-        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld=[]
         i=0
         while len(flp)<3:
                 i+=1
                 flp=select_h5(fpath,yrmoday,st_hour,int(st_minute)-i,ed_hour,int(ed_minute)+i)
-
         pp=get_h5_pointing(flp)
         #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
         dd=get_all_demodulated_data(fld_demod, fld)
         combined=combine_cofe_h5_pointing(dd,pp)
-        
-        #synchronized data and az values
-        az1 = combined['az']
+
+        az1= combined['az']
         data1 = combined['sci_data'][chan][var]
         steps = len(data1)
         
@@ -548,12 +549,12 @@ def plotnow_azrevsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,
         
         #determine indices in azimuth/data array which correspond to a new revolution of the telescope
         for i in range(steps):
-                #round values to resolution for comparison later
-                az1[i] = round_fraction(az1[i], dx)
-                if i > 0:
-                        if abs(az1[i] - az1[i-1]) >= 180.:
-                                iaz.append(i)
-                                rev += 1
+            #round values to resolution for comparison later
+            az1[i] = round_fraction(az1[i], dx)
+            if i > 0:
+                if abs(az1[i] - az1[i-1]) >= 180.:
+                    iaz.append(i)
+                    rev += 1
         
         #append each revolution array to a list     
         for j in range(rev):
@@ -610,22 +611,22 @@ def plotnow_azrevsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,
 
 def plotnow_azrevsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
         flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
-        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld = []
         i=0
         while len(flp)<3:
                 i+=1
                 flp=select_h5(fpath,yrmoday,st_hour,int(st_minute)-i,ed_hour,int(ed_minute)+i)
 
-        pp=get_h5_pointing(flp)
+        #pp=get_h5_pointing(flp)
         #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
-        dd=get_all_demodulated_data(fld_demod, fld)
+        #dd=get_all_demodulated_data(fld_demod, fld)
         #combined=combine_cofe_h5_pointing(dd,pp)
         
         #synchronized data and az values
         az1 = get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))['az']
-        data1 = get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))[chan] 
-        print('az1', az1)
-        print('data1', data1)
+        
+        data1 = get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))[chan]   
         steps = len(data1)
         
         #convert to temp for cryo sensors
@@ -713,7 +714,8 @@ def plotnow_azrevsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute
 
 def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
         flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
-        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld = []
         #print('flp',flp)
         #print('fld_demod', fld_demod)
         #print('fld',fld)
@@ -726,7 +728,7 @@ def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,s
         #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
         dd=get_all_demodulated_data(fld_demod, fld) 
         #print('dd', dd)    
-        combined=combine_cofe_h5_pointing(dd,pp) #why exactly is this combine needed?
+        combined=combine_cofe_h5_pointing(dd,pp) #definitely needed to combine pointing and demod data--no reference to raw data?
         
         #synchronized data az and el values
         az1, el1 = combined['az'], combined['el']
@@ -807,13 +809,23 @@ def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,s
 
 def plotnow_azelsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False): #added to try to fix ploting 
         flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
-        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
-        
+        fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld = []
         i=0
         while len(flp)<3:
                 i+=1
                 flp=select_h5(fpath,yrmoday,st_hour,int(st_minute)-i,ed_hour,int(ed_minute)+i)
 
+        
+        #pp=get_h5_pointing(flp)
+        #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
+        #dd=get_all_demodulated_data(fld_demod, fld) 
+        #print('dd', dd)    
+        #combined=combine_cofe_h5_pointing(dd,pp) #definitely needed--see paper notes (NL)
+        
+        #synchronized data az and el values
+        #az1, el1 = combined['az'], combined['el']
+        #data = combined['sci_data'][chan][var]            
         #pp=get_h5_pointing(flp)
         #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
         #dd=get_all_demodulated_data(fld_demod, fld)     

@@ -43,7 +43,8 @@ def select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute, demod=True):
     #searching all dat/h5 files under selected path
     all_fname_demod = glob.glob(fpath+'/demod_data/'+yrmoday+'/*.h5')
     all_fname = glob.glob(fpath+'/data/'+yrmoday+'/*.dat') #raw data
-    #print('all_fname_demod', all_fname_demod)
+    #print('all_fname_demod', all_fname_demod[3])
+    #print('all_fname_demod', all_fname_demod[3][-11:][:3])
 
     ftime=time_conv(st_hour,st_minute,ed_hour,ed_minute)
     #print('ftime',ftime)  
@@ -66,7 +67,7 @@ def select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute, demod=True):
         #only include complete files
         if os.stat(sub_fname[f]).st_size == 10752000:
             #find the demodulated file from the time stampt corresponding to dat file
-            fname = sub_fname[f][:66] + 'demod_data/' + sub_fname[f][71:-4]+'.h5'
+            fname = sub_fname[f][:66] + 'demod_data/' + sub_fname[f][71:-4]+'.h5'  #Only if using raw data
             #if demodulate file exists, add it
             if fname in all_fname_demod:
                 sub_fname_demod.append(fname)
@@ -90,6 +91,31 @@ def select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute):
                 if i[-11:][:5]>=star and i[-11:][:5]<=end]
 
     return sub_fname
+
+def select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute, demod=True):
+    #print('fpath', fpath)
+    all_fname_demod = glob.glob(fpath+'/demod_data/'+yrmoday+'/*.h5')
+    #print('all_fname_demod', all_fname_demod)
+    ftime=time_conv(st_hour,st_minute,ed_hour,ed_minute)  
+      
+    star=ftime[0]+ftime[1]
+    end=ftime[2]+ftime[3]
+    sub_fname=[ i for i in all_fname_demod
+                if i[-11:][:5]>=star and i[-11:][:5]<=end]
+    sub_fname_demod = []
+    for f in range(len(sub_fname)):
+        #only include complete files
+        #print('number',os.stat(sub_fname[f]).st_size)
+        if os.stat(sub_fname[f]).st_size == 426460L:  #Changed number for demod data
+            #find the demodulated file 
+            fname = all_fname_demod[f] 
+            #print('fname', fname, type(fname))
+            #if demodulate file exists, add it
+            #if fname in all_fname_demod:
+            sub_fname_demod.append(fname)
+    #print('sub_fname_demod', sub_fname_demod)
+    
+    return sub_fname_demod
 
 if __name__=="__main__":
     fpath='C:/Users/nlynn/Documents/Research/POLARIS/cosmology/data'
