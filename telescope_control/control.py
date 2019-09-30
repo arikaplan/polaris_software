@@ -755,7 +755,7 @@ class interface:
 	def acq_tel(self):
 		#function to run acq_tel data aquistion exe
 	
-		#redirect to folder so you can save files		
+		#redirect to folder so you can save files	
 		fpath='../../polaris_data'
 		os.chdir(fpath)
 		
@@ -802,6 +802,8 @@ class interface:
 		
 			#wait 1 second to give board connection time to close
 			time.sleep(2)
+
+			os.chdir('../polaris_software/telescope_control')
 			
 			#temporarily stop moniter thread
 			self.monitering = False

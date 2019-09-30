@@ -1,5 +1,9 @@
 import numpy as np
+<<<<<<< HEAD
 '''
+=======
+
+>>>>>>> 753e724d94f73f60cbba1845caf76f4569aa4ab1
 def NRAO_plot():
     ha=np.arange(0,12,.1)
     r=dict([(dec, np.degrees(compute_parallactic_angle((np.radians(ha/24.*360.)), np.radians(34), np.radians(dec)))) for dec in [-20, 0, 20, 30, 35, 40, 60,80]])
@@ -12,7 +16,11 @@ def NRAO_plot():
     for dec,pa in rk.iteritems():
         plot(ha,pa,label=str(dec))
     grid()
+<<<<<<< HEAD
 '''
+=======
+
+>>>>>>> 753e724d94f73f60cbba1845caf76f4569aa4ab1
 def compute_parallactic_angle(ha, latitude, declination):
     """Inputs and output in radians"""
     return np.arctan2(
