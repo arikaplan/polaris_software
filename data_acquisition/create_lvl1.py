@@ -1,12 +1,20 @@
+"""
+automatically run through the data file directories (assuming a fixed directory strucuture)
+and demodulate all perfect size files, place in demod_data/yyyymmdd.h5 files
+skip already created demod files
+"""
+
 import sys
 import os
-sys.path.append('../utils_meinhold')
-sys.path.append('../utils_zonca')
-sys.path.append('../utils_zonca/pointing')
+import sys
+import os
+#os.chdir('../../polaris_data')
+sys.path.append('../telescope_control/')
 sys.path.append('../')
-sys.path.append('../telescope_control')
-sys.path.append('../VtoT')
-import realtime_gp as rt
+sys.path.append('../utils_meinhold/')
+sys.path.append('../utils_zonca/')
+sys.path.append('../utils_zonca/pointing')
+from glob import glob
 import numpy as np
 import datetime
 import h5py
@@ -16,208 +24,167 @@ from planets import getlocation
 import warnings
 from astropy.coordinates import AltAz, Angle, EarthLocation, ICRS, SkyCoord, frame_transform_graph
 from astropy import units as u
-import ephem
-import matplotlib.pyplot as plt
-import time
-import Tkinter,tkFileDialog
-from Tkinter import *
-import ttk
 import pickle
-import glob
-import cPickle
+import math
+from contextlib import contextmanager
+import realtime_gp as rt
 
+#%pylab
 
-chan = 'ch0'
-var = 'Q'
-LOCATION = 'UCSB'
+LOCATION = 'UCSB' #this will need to be changed when we are in Greenland, obviously
+ltoffset = 7 #offset between local time and universal time in hours, eventually this should become redundant when were always working in utc time
 
-#gain in kelvin per volt
-changain = {'ch0':-3.58, 'ch4':-9.47, 'ch8':-11.1}
+#figure out how to use subsequent logic and run run_demod.py before hand without interference
+# (os.system('python hello.py sys.argv[1]'))
+singledate=False
+if len(sys.argv)>1:
+	datedir=sys.argv[1]
+	singledate=True
 
-#offset between local time and utctime in hours
-ltoffset = 0
+@contextmanager
+def cd(newdir):
+    prevdir = os.getcwd()
+    os.chdir(os.path.expanduser(newdir))
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
 
+with cd('demod_data'):
+    datelist=glob('*')
 
-def get_pointing_files(filelist=None):
-    if filelist == None:
-        root = Tkinter.Tk()
-        filelist = list(tkFileDialog.askopenfilenames( \
-            initialdir='D://software_git_repos/greenpol/telescope_control/data_aquisition/pointing_data/', parent=root,
-            title='Choose a set of files'))
-        root.destroy()
-    filelist.sort()
+if singledate:
+	datelist=[datedir]
 
-    return filelist
+channels = ['H1HiDC']#, 'H1HiAC','H2HiAC','H3HiAC']
+#gain in kelvin per volt based on last calibration
+changain = {'ch1':-1.48,'ch0':-1.48, 'ch4':-1.74, 'ch8':-1.4}
 
+for chan in channels:
+    print 'starting channel: ', chan
+    chan = rt.nametochan(chan)
+    for ddate in datelist:
 
-def read_some_data(filelist=None):
-    if filelist == None:
-        root = Tkinter.Tk()
-        filelist = list(tkFileDialog.askopenfilenames( \
-            initialdir='D://software_git_repos/greenpol/telescope_control/data_aquisition/demod_data/', parent=root,
-            title='Choose a set of files'))
-        root.destroy()
-    filelist.sort()
+        if not os.path.exists('./level1/%s' %ddate):
+            os.mkdir('../../polaris_data//level1/%s' %ddate)
 
-    dlist = []
-    for f in filelist:
-        hf = h5py.File(f)
-        dlist.append(hf['demod_data'])
-    d = np.concatenate(dlist)
-    hf.close()
+        iend = 0
+        fl1 = glob('../../polaris_data/level1/%s/%s*.h5' % (ddate, chan))
 
-    datadict = d
+        fld = glob('../../polaris_data/demod_data/%s/*.h5' % ddate)
 
-    return datadict, filelist
+        #check to see if there is a file already in lvl1, create files after that
+        if len(fl1)>0:
+            prevendfile = fl1[-1][-11:-3]
+            for f in range(len(fld)):
+                if fld[f][-11:-3] == prevendfile:
+                    iend = f
 
+            fld = fld[iend+1:]
 
-def get_file_times(fld):
-    startfile = fld[0][:24] + fld[0][30:-2] + 'dat'
-    endfile = fld[-1][:24] + fld[-1][30:-2] + 'dat'
-    # print startfile
-    # starttime = os.path.getctime(startfile)
-    starttime = os.stat(startfile).st_mtime
-    starttime = datetime.datetime.fromtimestamp(starttime)
+        modayyr = ddate[4:6] + '-' + ddate[-2:] + '-' + ddate[:4]
+        flp = glob('../../polaris_data/pointing_data/%s/*.h5' % modayyr)
 
-    # endtime = os.path.getctime(endfile)
-    endtime = os.stat(endfile).st_mtime
-    endtime = datetime.datetime.fromtimestamp(endtime)
+        dd = rt.get_demodulated_h5(fld)
+        pp = rt.get_h5_pointing(flp)
 
-    return starttime, endtime
+        combined = rt.combine_cofe_h5_pointing(dd, pp)
 
-def fileStruct(n_array, chan, starttime, endtime):
+        print 'you need to fix these string numbers since you changed file structure !!!!!!!!!!!!!!!!!!!!'
+        startfile = fld[0][6:-3]+'.dat'
+        starttime = os.path.getctime(startfile)
+        starttime = datetime.datetime.fromtimestamp(starttime)
 
-    #fpath = "D:/software_git_repos/greenpol/telescope_control/data_aquisition/level1"
-    #os.chdir(fpath)
-    yrmoday = starttime.strftime('%Y%m%d')
-    path = '-'.join((starttime.strftime('%H_%M_%S'), endtime.strftime('%H_%M_%S')))
-    path = '-'.join((chan, path))
-    print('start time: ', starttime)
-    print('end time: ', endtime)
-    print('elapsed time: ', (endtime - starttime).total_seconds(), 'sec')
-    if not os.path.exists(yrmoday):#this is the first file being created for that time
-        os.makedirs(yrmoday)
-        #set index to 0
+        endfile = fld[-1][6:-3] + '.dat'
+        endtime = os.path.getctime(endfile)
+        endtime = datetime.datetime.fromtimestamp(endtime)
 
-    path = '/'.join((yrmoday,path))
-    path = '.'.join((path,"h5"))
-    with h5py.File(str(path).replace("pkl","h5"), mode="w") as f:
-        f.create_dataset("data", data=n_array.to_records(index=False))
+        gpstime = combined['gpstime'] / 1000
 
-def round_fraction(number, res):
-    amount = int(number/res)*res
-    remainder = number - amount
-    return amount if remainder < res/2. else amount+res
+        utcdatetime, utctime = rt.convert_gpstime(starttime, gpstime, ltoffset)
 
+        AZ = combined['az']
+        EL = combined['el']
 
-def convert_gpstime(starttime, gpstime, ltoffset=0, bits_to_ms=2 ** 24, format='seconds', ttype='utc',
-                    singletime=False):
-    # function to convert gpstime to UTC time or local time
+        location = getlocation(LOCATION)
 
-    # universal time day
-    ltoffset = ltoffset * 60 * 60
-    utcday = starttime + datetime.timedelta(0, ltoffset)
+        # create ra dec sky object
+        azel = SkyCoord(az=AZ, alt=EL, obstime=utcdatetime, location=location, frame='altaz', unit='deg')
 
-    # days since last sunday
-    idx = (utcday.weekday() + 1) % 7
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # convert from ra dec to az/el for pointing
+            radec = azel.icrs
 
-    # date of previous sunday in universal coord
-    sunday = utcday - datetime.timedelta(idx)
+        ra = radec.ra.rad
+        dec = radec.dec.rad
 
-    syear = int(str(sunday)[:4])
-    smonth = int(str(sunday)[5:7])
-    sday = int(str(sunday)[8:10])
+        for a in range(len(AZ)):
+            AZ[a] = math.radians(AZ[a])
+            EL[a] = math.radians(EL[a])
 
-    sunday = datetime.datetime(syear, smonth, sday, 0, 0, 0)
+        lat = location.latitude.rad
+        ha = altaz2ha(EL, AZ, lat)
+        psi = compute_parallactic_angle(ha, lat, dec)
 
-    # seconds since last sunday
-    sundaysec = (utcday - sunday).total_seconds()
+        h5data = pd.DataFrame({"TIME": utctime})
+        h5data["PHI"] = ra
+        h5data["THETA"] = np.pi / 2 - dec
+        h5data["PSI"] = psi
+        h5data["FLAG"] = np.zeros(len(utctime))
+        h5data["TEMP"] = combined['sci_data'][chan]['T']*changain[chan]
+        h5data["Q"] = combined['sci_data'][chan]['Q']*changain[chan]
+        h5data["U"] = combined['sci_data'][chan]['U']*changain[chan]
 
-    # convert to seconds
-    bits_to_sec = bits_to_ms / 1000
-
-    # number of wraps so far
-    numwraps = int(sundaysec / bits_to_sec)
-
-    # time of last wrap
-    gpsstarttime = sunday + datetime.timedelta(0, numwraps * bits_to_sec)
-
-    # convert gps starttime to timestamp
-    # gpsstarttime = (gpsstarttime-datetime.datetime(1970,1,1)).total_seconds()
-    gpsstarttime = time.mktime(gpsstarttime.timetuple())
-
-    if singletime == False:
-        # find all wrap points in current data set
-        gpsdiff = np.diff(gpstime)
-        iwrap = np.where(gpsdiff < -2 ** 24 / 1000 / 2)[0]
-        # iwrap = np.where(abs(gpsdiff) > 2**24/1000/2)[0]
-
-        # unwrap gpstime
-        for w in iwrap:
-            gpstime[w + 1:] = gpstime[w + 1:] + gpstime[w]
-
-    if ttype == 'utc':
-        ltoffset = 0
-    # gpstime gives seconds since starting point
-    dtime = gpsstarttime + gpstime - ltoffset
-
-    if format == 'datetime':
-        if singletime == False:
-            t = []
-            for i in range(len(dtime)):
-                t.append(datetime.datetime.fromtimestamp(dtime[i]))
+        #yrmoday = starttime.strftime('%Y%m%d')
+        print 'start time: ', starttime
+        print 'end time: ', endtime
+        telapsed = (endtime - starttime).total_seconds()
+        if telapsed < 60:
+            print 'elapsed time: ', telapsed, 'seconds'
+        elif telapsed < 60.*60.:
+            telapsed = telapsed/60.
+            print 'elapsed time: ', telapsed, 'minutes'
         else:
-            t = datetime.datetime.fromtimestamp(dtime)
+            telapsed = telapsed/60./60.
+            print 'elapsed time: ', telapsed, 'hours'
 
-        return t, dtime
+        lvl1_file = '%s-%s-%s.h5' % (
+        chan, startfile[-12:-4], endfile[-12:-4])
 
-    else:
-        return dtime
+        fpath = "../../polaris_data/level1"
+        path = '/'.join((fpath, ddate))
+        path = '/'.join((path, lvl1_file))
+
+        with h5py.File(str(path).replace("pkl", "h5"), mode="w") as f:
+           f.create_dataset("data", data=h5data.to_records(index=False))
+
+        fl1 = glob('../../polaris_data/level1/%s/%s*.h5' % (ddate, chan))
+
+        if len(fl1) > 1:
+            prevstartfile = fl1[-1][-20:-12]
+            prevh5data = h5py.File(fl1[0])['data']
+            newh5data = h5py.File(fl1[-1])['data']
+            h5data = np.concatenate([prevh5data, newh5data])
+            lvl1_file = '%s-%s-%s.h5' % (
+                chan, prevstartfile, endfile[-12:-4])
+
+            fpath = "../../polaris_data/level1"
+            path = '/'.join((fpath, ddate))
+            path = '/'.join((path, lvl1_file))
+
+            with h5py.File(path, 'w') as h5file:
+                h5file.create_dataset("data", data=h5data)
 
 
-ddict={}
-print('pick data files')
-dd, fld = read_some_data()
-print('pick pointing files')
-flp = get_pointing_files()
-pp = rt.get_h5_pointing(flp)
-combined = rt.combine_cofe_h5_pointing(dd,pp)
-starttime, endtime = get_file_times(fld)
+        '''
+        #print( 'already have a demod_data directory for %s' %ddate)
+        fl1=glob('level1/%s/*.h5' %ddate)[-1]
+        fld=glob('demod_data/%s/*.h5' %ddate)
+        flp = glob('pointing_data/%s/*.h5' % modayyr)
 
-#seconds since last sunday utc
-gpstime = dd['rev']/1000#(combined['gpstime'])/1000
-dtime, utime = convert_gpstime(starttime, gpstime, ltoffset, format = 'datetime')
-
-AZ = combined['az']
-EL = combined['el']
-
-location = getlocation(LOCATION)
-
-#create ra dec sky object
-azel = SkyCoord(az = AZ, alt = EL, obstime = dtime, location = location, frame = 'altaz', unit='deg')
-print('starting the conversion from horizontal to celestial coordinates')
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    #convert from ra dec to az/el for pointing
-    radec = azel.icrs
-ra = radec.ra.rad
-dec = radec.dec.rad
-
-AZ = np.radians(AZ)
-EL = np.radians(EL)
-
-lat = location.latitude.rad
-ha = altaz2ha(EL, AZ, lat)
-psi = compute_parallactic_angle(ha, lat, dec)
-
-#h5data=pd.DataFrame({"THETA" : np.pi/2 - THETA })
-h5data=pd.DataFrame({"TIME" : utime})
-h5data["PHI"] = ra
-h5data["THETA"] = np.pi/2 - dec
-h5data["PSI"] = psi
-h5data["FLAG"] = np.zeros(len(dtime))
-h5data["TEMP"] = combined['sci_data'][chan]['T']*changain[chan]
-h5data["Q"] = combined['sci_data'][chan]['Q']*changain[chan]
-h5data["U"] = combined['sci_data'][chan]['U']*changain[chan]
-
-fileStruct(h5data, chan, starttime, endtime)
+        makelvl1(chan, date, fld, flp)
+        else:
+            #print('%s already exists' %demod_file)
+            pass
+        '''

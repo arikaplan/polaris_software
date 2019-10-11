@@ -26,10 +26,6 @@ def getlocation(LOCATION):
 					UCSB      = EarthLocation( lat=Angle(34.414, 'deg'),
 																		lon=Angle(-119.843, 'deg'),
 																		height=14 * u.m),
-					Sedgwick      = EarthLocation( lat=Angle(34.7, 'deg'),
-																		lon=Angle(-120.02, 'deg'),
-																		height=14 * u.m),
-
 )
 
 	return locations[LOCATION]

@@ -1,14 +1,6 @@
                                                                                                                      
 ######### things to do ##########
 
-##flags to add
-cal in/out
-cal command in/out
-emulator on/off
-scanning?
-acq_tel?
-gpstime recieving (have lock)
-weather
 
 
 ## bugs
@@ -37,15 +29,11 @@ look into relation between offset and modulus to figure out why you get a 10 deg
 
 ## most relavent:
 
-figure out right way to deal with not being able to work with old pointing files every time you add a new variable to pointing files
-
 set motor_off function to be able to only turn of X or Y motor individually
 
 set up plot_some_data to plot pointing file info
 
 check acq_tel averages directly in notebook and make sure they match up with what gui is saving.
-
-add ability to plot emulator,gpslock, calibrator status to plot tools
 
 
 
@@ -131,7 +119,7 @@ should move realtime_gp into data_aquisition folder
 #development
 
 #commit notes:
-added new script to make lvl 1 files that selects files like plot tool, need to add automatic selection of pointing files
-added sedgwick location to pointing files
-updated linearize_Vexp so that it will change back to original directory after completing
-
+plot_tool now plots time since start on xaxis
+fixed bug in scan.py for odd number of az scans (need to double check that fix worked)
+Phidget temp wasnt plotting in plot_tool because it was commented out in realtime_gp
+got rid of some debugging comments in plot_tool

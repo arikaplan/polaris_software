@@ -1,18 +1,17 @@
 """set of utility functions for acquisition software"""
 
 import numpy as np
-#import pyfits as pyfits
+import pyfits as pyfits
 import ephem 
 import peakanalysis as pk
 import matplotlib.pyplot as plt
 from glob import glob
-#from scipy.signal import butter,filtfilt,iirdesign,correlate
-#from demod import datparsing
+from scipy.signal import butter,filtfilt,iirdesign,correlate
+from demod import datparsing
 from matplotlib import pyplot as plt
 from matplotlib import mlab
 import time
 import os
-
 
 
 rtd=180/np.pi
@@ -50,10 +49,10 @@ def smooth(x,window_len=11,window='hanning'):
     """
 
     if x.ndim != 1:
-        raise ValueError("smooth only accepts 1 dimension arrays.")
+        raise ValueError, "smooth only accepts 1 dimension arrays."
 
     if x.size < window_len:
-        raise ValueError("Input vector needs to be bigger than window size.")
+        raise ValueError, "Input vector needs to be bigger than window size."
 
 
     if window_len<3:
@@ -61,7 +60,7 @@ def smooth(x,window_len=11,window='hanning'):
 
 
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
 
 
     s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
@@ -144,13 +143,11 @@ def thicklegendlines(legendname,thick=3):
         line.set_linewidth(thick)
     plt.draw()
 
-def rebin(a, MN):
+def rebin(a, (m, n)):
     """
     Downsizes a 2d array by averaging, new dimensions must be integral factors of original dimensions
     Credit: Tim http://osdir.com/ml/python.numeric.general/2004-08/msg00076.html
     """
-    m = MN[0]
-    n = MN[1]
     M, N = a.shape
     ar = a.reshape((M/m,m,N/n,n))
     return np.sum(np.sum(ar, 2), 0) / float(m*n)
@@ -209,9 +206,9 @@ def fit_fknee(psd,freqs):
     p=np.array([np.sqrt(np.mean(psd[topfreqs])),.15,1.0])
     m=optimize.leastsq(psd_fit_function_resid,p,args=(freqs,psd,err),full_output=1)
     pfinal=m[0]
-    print('wnlevel',pfinal[0])
-    print('Fknee' ,pfinal[1])
-    print('alpha' ,pfinal[2])
+    print 'wnlevel',pfinal[0]
+    print 'Fknee' ,pfinal[1]
+    print 'alpha' ,pfinal[2]
     return(m)
     
 
@@ -302,7 +299,7 @@ def lowpass(d,sample_rate,cutoff):
     just stuff in an example from scipy to get this functional
     '''
     frac_cutoff=cutoff/(sample_rate/2.)
-    print(frac_cutoff)
+    print frac_cutoff
     b,a=butter(3,frac_cutoff)
     #b,a=iirdesign(frac_cutoff-.001,frac_cutoff+.1,.9,.1)
     filtered_d = filtfilt(b,a,d)
@@ -330,7 +327,7 @@ def rebin(a, *args):
              ['args[%d],factor[%d],'%(i,i) for i in range(lenShape)] + \
              [')'] + ['.sum(%d)'%(i+1) for i in range(lenShape)] + \
              ['/factor[%d]'%i for i in range(lenShape)]
-    print(''.join(evList))
+    print ''.join(evList)
     return eval(''.join(evList))
 
 def rebin_factor( a, newshape ):
@@ -400,13 +397,13 @@ def get_cofe_target(ut,lat,lon,target):
     cofe.elevation=0.0
     year=2013
     month=10
-    day=4
+    day=04
     az=[]
     el=[]
     for u,la,lo in zip(ut,lat,lon):
         if (u >24):
             u=u-24
-            day=5
+            day=05
         hour=int(np.fix(u))
         minute=(u-hour)*60
         iminute=int(np.fix(minute))
@@ -436,7 +433,7 @@ def get_cofe_crossing(ut,toi,gaz,centerut,lat=None,lon=None,target='Sun',plot=Fa
     h=np.int(np.median(h))
     targetpos=get_cofe_target(ut[t],lat[t],lon[t],target)
     gfit=pk.fit_a_peak_ser(toi[t],h,invert=1)
-    print(gfit[0].params)
+    print gfit[0].params
     x=np.arange(1,len(ut[t])+1)
     gauss=pk.gaussian(gfit[0].params,x)
     if plot==True:
@@ -469,7 +466,7 @@ def oplot(*params):
 def linfit(x,y):
     """embed python lin algebra fitting to look like idl tool"""
     if len(y) != len(x):
-        print('inputs need to be same length arrays')
+        print 'inputs need to be same length arrays'
         
     a=np.vstack([x,np.ones(len(x))]).T
     m,b=np.linalg.lstsq(a,y)[0]
@@ -491,7 +488,7 @@ def find_command_uts(command):
         addr=linelist[2]
         cmd=(linelist[3].strip('\n'))
         if ((cmd == command) and (addr == '0006')):
-            print('found one')
+            print 'found one'
             #utadjusted=24*(linedate.day-17.)+linedate.hour+linedate.minute/60.+linedate.second/3600.
             #timelist.append(utadjusted)
             timelist.append((linedate.day,linedate.hour,linedate.minute,linedate.second))
@@ -508,7 +505,7 @@ def check_bit(flag, bit=0):
     
 def grab_x_from_plot(fig):
 
-    print('right button press selects xvalue to store. middle click to  end function')
+    print 'right button press selects xvalue to store. middle click to  end function'
     global startlist,stoplist,start
     global cid
     global ptnum
@@ -520,22 +517,22 @@ def grab_x_from_plot(fig):
     def onclick(event):
         global ptnum,startlist,stoplist,start
         global cid
-        print(ptnum)
-        print(ptnum%2)
+        print ptnum
+        print ptnum%2
         if event.button == 3:
             if ptnum%2 == 0:
                 startlist.append(event.xdata)
-                print('chose start point',event.xdata)
-                print('select stop point')
+                print 'chose start point',event.xdata
+                print 'select stop point'
             elif ptnum%2 == 1:
                 stoplist.append(event.xdata)
-                print('chose stop point',event.xdata)
-                print('select next startpoint')
+                print 'chose stop point',event.xdata
+                print 'select next startpoint'
             start=False
             ptnum+=1
         elif event.button ==2:
-            print('should quit now, was here: ',event.xdata)
-            print(cid)
+            print 'should quit now, was here: ',event.xdata
+            print cid
             fig.canvas.mpl_disconnect(cid)
     cid=fig.canvas.mpl_connect('button_press_event',onclick)
     outlist=np.concatenate((np.array(startlist),np.array(stoplist)),axis=2)
@@ -606,7 +603,7 @@ def fixlong(longitude):
 def linfit(x,y):
     """embed python lin algebra fitting to look like idl tool"""
     if len(y) != len(x):
-        print('inputs need to be same length arrays')
+        print 'inputs need to be same length arrays'
         
     a=np.vstack([x,np.ones(len(x))]).T
     m,b=np.linalg.lstsq(a,y)[0]

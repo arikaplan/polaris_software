@@ -3,8 +3,7 @@ produced by the telescopes' data acquisition code.
 """
 import numpy as np
 import logging as l
-import sys
-sys.path.append('../utils_zonca/demod')
+
 import utils
 from dtypes import *
 
@@ -62,8 +61,8 @@ def create_revdata(raw_data, volts=True,supply_index=False, printstatements=True
     d = remove_noise_triggers(d)
 
     if printstatements:
-        print(len(start_of_revs))
-        print(config['ENC_START_TRIGGER'])
+        print len(start_of_revs)
+        print config['ENC_START_TRIGGER']
 
     # remove revolutions with bad number of samples 
     start_of_revs, = np.where(d['enc'] < config['ENC_START_TRIGGER'])
@@ -81,7 +80,7 @@ def create_revdata(raw_data, volts=True,supply_index=False, printstatements=True
     # remove the samples of the bad revolutions from the array
     #print('dshape',np.shape(d))
     for i in invalid_revs[::-1]:
-	    d = np.delete(d, np.s_[start_of_revs[i]:start_of_revs[i+1]])
+	d = np.delete(d, np.s_[start_of_revs[i]:start_of_revs[i+1]])
     #print('dshape after cleaning',np.shape(d))
 
 	
@@ -97,8 +96,8 @@ def create_revdata(raw_data, volts=True,supply_index=False, printstatements=True
     else:
         data = np.zeros(len(d)/config['SEC_PER_REV'], dtype=out_dtype)
         d_rev = d[::config['SEC_PER_REV']]
-    if len(d_rev)>len(data):
-        data=np.append(data,data[0])
+	if len(d_rev)>len(data):
+		data=np.append(data,data[0])
         data['rev'] = d_rev['rev0'].astype(np.long) + \
                       d_rev['rev1'].astype(np.long) * 256 + \
                       d_rev['rev2'].astype(np.long) * 256**2
@@ -132,4 +131,4 @@ def read_raw(filenames, volts=True,supply_index=False, printstatements = True):
                          )
 
 if __name__=="__main__":
-    print('what the fuck!!!!!!!!!')
+    print 'what the fuck!!!!!!!!!'

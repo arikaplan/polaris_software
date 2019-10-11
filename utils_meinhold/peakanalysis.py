@@ -1,11 +1,11 @@
 
 # find peaks, generate histograms and plot  histograms
 
-#import pyfits
+import pyfits
 import numpy as np
 
 import matplotlib.pyplot as plt
-#import scipy.io
+import scipy.io
 import time
 import gc
 
@@ -15,7 +15,7 @@ sigma_cutoff=600  # ignore peaks this wide
 def find_peaks(toi,pksigma=1.5,pkwidth=5):
 # find peaks in toi data first
 #first remove saturation
-    print('params pk',pksigma,pkwidth,len(toi))
+    print 'params pk',pksigma,pkwidth,len(toi)
     satlevel=np.max(toi)
     s=np.where(toi == satlevel)
     s=np.array(s[0])
@@ -25,11 +25,11 @@ def find_peaks(toi,pksigma=1.5,pkwidth=5):
         bad=np.concatenate((bad,newbad),axis=0)
     if len(bad)>0:
         toi[np.int32(bad)]=0
-    print('satpoints',len(bad))
+    print 'satpoints',len(bad)
     g=np.where(toi < pksigma*np.std(toi))
     sig=np.std(toi[g])
     pks=np.array(np.where(toi > pksigma*sig)[0])
-    print('in pk lenpks',len(pks))
+    print 'in pk lenpks',len(pks)
     return pks
     
 def remove_saturation(toi):
@@ -271,7 +271,7 @@ def get_histogram(peakstats,nbins=100,pplot=True,min_width=1,max_width=20,min_sn
                 plt.ylabel('Number of particles')
                 plt.title('Cuts: '+np.str(min_width)+'<width<'+np.str(max_width)+',s/n >'+np.str(min_sn)+',Chisqdiff>'+np.str(min_diffchis))
                 plt.show()
-                print('did I plot?')
+                print 'did I plot?'
             if plotfile!=None:
                 plt.savefig(plotfile)
     return pkhist
@@ -318,8 +318,8 @@ def gather_peaks_bysize(toi,pkcapwidth=40,pksigmacut=3.0,pplot=False,toierr=None
             diffchis.append(diffchi)
     tstop=time.ctime()
     gc.collect()
-    print(tstart)
-    print(tstop)
+    print tstart
+    print tstop
     #print len(pksizes)
     peakstats={}
     peakstats['pk_size']=np.array(pksizes)

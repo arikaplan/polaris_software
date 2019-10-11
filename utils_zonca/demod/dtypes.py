@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from configparser import ConfigParser
+from ConfigParser import ConfigParser
 
 config = dict(  NCHAN=16, 
                 SEC_PER_REV=256, 
