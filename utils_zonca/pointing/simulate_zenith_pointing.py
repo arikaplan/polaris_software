@@ -1,5 +1,5 @@
 import datetime
-import healpy as hp
+#import healpy as hp
 from collections import OrderedDict
 import numpy as np
 from scipy import constants
@@ -10,10 +10,10 @@ from astropy.coordinates import AltAz, EarthLocation, Angle, ICRS
 from astropy.time import Time, TimeDelta
 
 NSIDE = 128
-HOURS = 24*365
+HOURS = 4
 SAMPLING = 600 #1/30. # 1 sec
 ELEVATION = Angle(90, unit=u.deg)
-LOCATION = "Tibet"
+LOCATION = "Sedgwick"
 
 # Barcroft
 locations = dict(
@@ -26,11 +26,14 @@ locations = dict(
         Tibet     = EarthLocation( lat=Angle(32.3166667, 'deg'),
                                   lon=Angle(80.0166666667, 'deg'),
                                   height=5100 * u.m),
+        Sedgwick=EarthLocation(lat=Angle(34.7, 'deg'),
+                           lon=Angle(-120.01, 'deg'),
+                           height=810 * u.m),
 )
 
 location = locations[LOCATION]
 
-start_time = Time(datetime.datetime(2015, 8, 1), scale='ut1')
+start_time = Time(datetime.datetime(2019, 10, 30), scale='ut1')
 sampling_interval = TimeDelta(SAMPLING, format="sec")
 time = start_time + sampling_interval * np.arange(0., HOURS*3600/SAMPLING)
 

@@ -32,8 +32,8 @@ def nametochan(name):
 	'H1LoAC':'ch2' ,  'H1LoDC':'ch3', 'H2HiAC':'ch4' ,
 	'H2HiDC':'ch5' ,  'H2LoAC':'ch6',  'H2LoDC':'ch7',
 	'H3HiAC':'ch8', 'H3HiDC':'ch9',  'H3LoAC':'ch10',
-	 'H3LoDC':'ch11', 'HornTop':'ch12', 'Amplifier': 'ch13',
-	'Cooler':'ch14', 'Transition':'ch15'}
+	 'H3LoDC':'ch11', 'BackendTSS':'ch12', 'Amplifier': 'ch13',
+	'Cooler':'ch14', 'Calibrator':'ch15'}
 
     chan = chans[name]
     return chan
@@ -91,7 +91,7 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
     chan_labels = StringVar()
     chan_labels.set("H1HiAC_T H1HiAC_Q H1HiAC_U H1HiDC H1LoAC_T H1LoAC_Q H1LoAC_U H1LoDC\
                 H2HiAC_T H2HiAC_Q H2HiAC_U H2HiDC H2LoAC H2LoDC\
-                 H3HiAC_T H3HiAC_Q H3HiAC_U H3HiDC H3LoAC_T H3LoAC_Q H3LoAC_U H3LoDC HornTop Amplifier Cooler Transition")           
+                 H3HiAC_T H3HiAC_Q H3HiAC_U H3HiDC H3LoAC_T H3LoAC_Q H3LoAC_U H3LoDC BackendTSS Amplifier Cooler Calibrator")
     tlist=[]
     if datatype=='demod':
         dlist=[]
@@ -148,7 +148,7 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
             entry = lstbox.get(i)
             reslist.append(entry)
         for val in reslist:
-            chan=nametochan(val[:6])
+            chan=nametochan(val)
             if datatype=='demod':
                 component=val[-1]
                 if ((component != 'T') and (component != 'Q') and (component != 'U')):
@@ -174,7 +174,7 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
             entry2 = lstbox2.get(i)
             reslist2.append(entry2)
         for val in reslist2:
-            chan=nametochan(val[:6])
+            chan=nametochan(val)
             if datatype=='demod':
                 component=val[-1]
                 if ((component != 'T') and (component != 'Q') and (component != 'U')):
@@ -192,7 +192,7 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
         selection3 = lstbox3.curselection()
         entry3 = lstbox3.get(selection3[0])
         val=entry3
-        chan=nametochan(val[:6])
+        chan=nametochan(val)
         if datatype=='demod':
             component=val[-1]
             if ((component != 'T') and (component != 'Q') and (component != 'U')):

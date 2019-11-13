@@ -1,0 +1,17 @@
+(dp0
+S'Plot'
+p1
+(dp2
+S'Date'
+p3
+S'2019-11-13'
+p4
+sS'To'
+p5
+S'04-30'
+p6
+sS'From'
+p7
+S'03-20'
+p8
+ss.

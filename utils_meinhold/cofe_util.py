@@ -1,13 +1,13 @@
 """set of utility functions for acquisition software"""
 
 import numpy as np
-import pyfits as pyfits
+#import pyfits as pyfits
 import ephem 
 import peakanalysis as pk
 import matplotlib.pyplot as plt
 from glob import glob
 from scipy.signal import butter,filtfilt,iirdesign,correlate
-from demod import datparsing
+#from demod import datparsing
 from matplotlib import pyplot as plt
 from matplotlib import mlab
 import time

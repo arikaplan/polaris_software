@@ -448,17 +448,17 @@ def plotnow(fpath,yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,su
 
 	#sort data according to sorted azimuth
 	data = [x for _,x in sorted(zip(xa,data))]
+	data = np.asarray(data)
 	xa = sorted(xa)
-	
 	#convert to temp for cryo sensors
-	if chan == 12:
+	if int(chan[2:]) == 12:
 		data = data*10. + 273.15
-	if chan == 13:
+	if int(chan[2:]) == 13:
 		data = convert.convert(data, 'e')
-	if chan == 14:
+	if int(chan[2:]) == 14:
 		data = convert.convert(data, 'h')
-	if chan == 15:
-		data = data*10. + 273.15
+	if int(chan[2:]) == 15:
+		data = data*10 + 273.15
 	#change units on plot label
 	if int(chan[2:]) < 12:
 		unit = 'V'

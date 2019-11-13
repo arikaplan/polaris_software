@@ -1,7 +1,7 @@
 
 # find peaks, generate histograms and plot  histograms
 
-import pyfits
+#import pyfits
 import numpy as np
 
 import matplotlib.pyplot as plt

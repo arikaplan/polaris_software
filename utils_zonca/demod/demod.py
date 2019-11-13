@@ -2,7 +2,7 @@ from __future__ import division
 import os.path
 import numpy as np
 import math
-import pyfits
+#import pyfits
 import logging as l
 from exceptions import Exception
 from optparse import OptionParser

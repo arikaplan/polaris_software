@@ -178,8 +178,8 @@ class interface:
 		if value==self.choice1[13]:
 
 			self.choice2=['all', 'H1 Hi AC','H1 Hi DC','H1 Lo AC','H1 Lo DC','H2 Hi AC','H2 Hi DC'
-			,'H2 Lo AC','H2 Lo DC','H3 Hi AC','H3 Hi DC','H3 Lo AC','H3 Lo DC','Horn Top'
-			,'Amplifier','Cooler','Transition']
+			,'H2 Lo AC','H2 Lo DC','H3 Hi AC','H3 Hi DC','H3 Lo AC','H3 Lo DC','Backend TSS'
+			,'Amplifier','Cooler','Calibrator']
 	
 			self.bar2=StringVar()
 			self.bar2.set('H1 Hi AC')
@@ -215,8 +215,8 @@ class interface:
 	        'H1 Lo AC': 'ch2','H1 Lo DC': 'ch3','H2 Hi AC': 'ch4',
 	        'H2 Hi DC': 'ch5','H2 Lo AC': 'ch6','H2 Lo DC': 'ch7',
 	        'H3 Hi AC': 'ch8','H3 Hi DC': 'ch9','H3 Lo AC': 'ch10',
-	        'H3 Lo DC': 'ch11','Horn Top': 'ch12','Amplifier': 'ch13',
-	        'Cooler': 'ch14','Transition': 'ch15'}
+	        'H3 Lo DC': 'ch11','Backend TSS': 'ch12','Amplifier': 'ch13',
+	        'Cooler': 'ch14','Calibrator': 'ch15'}
 	     
 	    channel = channels[name]
 
