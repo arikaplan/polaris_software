@@ -28,6 +28,7 @@ import pickle
 import datetime
 import plot_path as p_p
 
+
 samprate=27.  #assumed spin rate of pol modulator for rough time estimation inside files
 
 def get_h5_pointing(filelist,startrev=None, stoprev=None,angles_in_ints=False,azel_era=3):
@@ -91,7 +92,7 @@ def get_h5_pointing(filelist,startrev=None, stoprev=None,angles_in_ints=False,az
                         h.close()
         
         hpointing = np.concatenate(hpointing)
-        
+
         #cut out blank lines from unfilled files
         if startrev != None:
                 hpointing=hpointing[hpointing['gpstime'] > startrev]
@@ -135,10 +136,13 @@ def get_h5_pointing(filelist,startrev=None, stoprev=None,angles_in_ints=False,az
                         badaz=badaz[1:]
                 azmeans[badaz]=(azmeans[badaz-2]+azmeans[badaz+2])/2.0
         azmeans=np.mod(azmeans,360.)
+        print("Backend_TSS", cryo1means)
+        print("Calibrator",cryo4means)
+        print('Phidget_Temp',phtempmeans)
         return {'el':elmeans,'az':azmeans,'gpstime':hrevlist, 'H1':h1means, 'H2':h2means, 'H3':h3means, 'Backend_TSS':cryo1means
                 , 'Amplifier':cryo2means, 'Cooler':cryo3means, 'Calibrator':cryo4means
                 , 'x_tilt':azlevmeans, 'y_tilt':ellevmeans, 'az offset':azoffsetmeans, 'el offset':eloffsetmeans, 'computer time':comptimemeans
-                , 'flag':flagmeans, 'Phidget_Temp' :phtempmeans}
+                , 'flag':flagmeans, 'Phidget_Temp':phtempmeans}
 
 def get_h5_pointing_old(filelist,startrev=None, stoprev=None,angles_in_ints=False,azel_era=3):
         """
@@ -340,9 +344,7 @@ def chantoname(chan):
         'ch2': 'H1 Lo AC', 'ch3': 'H1 Lo DC', 'ch4': 'H2 Hi AC',
         'ch5': 'H2 Hi DC', 'ch6': 'H2 Lo AC', 'ch7': 'H2 Lo DC',
         'ch8': 'H3 Hi AC', 'ch9': 'H3 Hi DC', 'ch10': 'H3 Lo AC',
-        'ch11': 'H3 Lo DC', 'ch12':'Amplif','ch13':'Cooler',
-        'ch14':'az', 'ch15':'el','ch16':'Backen', 'ch17':'Calibr',
-        'ch18':'x_tilt','ch19':'y_tilt','ch20':'Phidget'}
+        'ch11': 'H3 Lo DC', 'ch13':'Amplif','ch14':'Cooler'}
 
     name = names[chan]
 
@@ -357,10 +359,7 @@ def nametochan(name):
     'H1LoAC':'ch2' ,  'H1LoDC':'ch3', 'H2HiAC':'ch4' ,
     'H2HiDC':'ch5' ,  'H2LoAC':'ch6',  'H2LoDC':'ch7',
     'H3HiAC':'ch8', 'H3HiDC':'ch9',  'H3LoAC':'ch10',
-     'H3LoDC':'ch11','Amplif': 'ch12',
-    'Cooler':'ch13','az':'ch14', 'el':'ch15',
-    'Backen':'ch16', 'Calibr':'ch17','x_tilt':'ch18',
-    'y_tilt':'ch19','Phidget':'ch20'}
+     'H3LoDC':'ch11','Amplif': 'ch13', 'Cooler':'ch14'}
 
     chan = chans[name]
 
@@ -411,16 +410,16 @@ def get_file_times(fld):
 
         return starttime, endtime
 
-def plotnow(fpath,yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
+def plotnow(yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,combined,supply_index=False):
         """
         plots scidata vs az
-        
+
         function to automatically read last 2 science files and last few pointing
         files, combine and plot signal vs azimuth. yrmoday should be a string
         '20130502' fpath should point to the 
         spot where acq_tel and converter.py were run
         """
-        flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        '''flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld = []
         i=0
@@ -431,7 +430,7 @@ def plotnow(fpath,yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,su
         pp=get_h5_pointing(flp)
         #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
         dd=get_all_demodulated_data(fld_demod, fld)
-        combined=combine_cofe_h5_pointing(dd,pp)
+        combined=combine_cofe_h5_pointing(dd,pp)'''
         
         xa = combined[xaxis]
         data = combined['sci_data'][chan][var]
@@ -441,13 +440,20 @@ def plotnow(fpath,yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,su
         xa = sorted(xa)
         
         #convert to temp for cryo sensors
-        if chan == 13:
-                data = convert.convert(data, 'e')
         if chan == 12:
-                data = convert.convert(data, 'h')
+                data1 = data1*10. + 273.15
+        if chan == 13:
+                data1 = convert.convert(data1, 'e')
+        if chan == 14:
+                data1 = convert.convert(data1, 'h')
+        if chan == 15:
+                data1 = data1*10. + 273.15
+        if chan == 'Phidget_Temp':
+                data = data*10. + 273.15
+
         
         #change units on plot label
-        if int(chan[2:]) == 12 or 13 or 20:
+        if int(chan[2:]) == 12 or int(chan[2:])==13 or chan == 'Phidget_Temp':
                 unit = 'K'
         else:
                 unit = 'V' 
@@ -510,8 +516,8 @@ def round_fraction(number, res):
         remainder = number - amount
         return amount if remainder < res/2. else amount+res
         
-def plotnow_azrevsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
-        flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+def plotnow_azrevsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,combined,supply_index=False):
+        '''flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld=[]
         i=0
@@ -521,10 +527,11 @@ def plotnow_azrevsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,
         pp=get_h5_pointing(flp)
         #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
         dd=get_all_demodulated_data(fld_demod, fld)
-        combined=combine_cofe_h5_pointing(dd,pp)
-
+        combined=combine_cofe_h5_pointing(dd,pp)'''
+        print('combined',combined)
         az1= combined['az']
         data1 = combined['sci_data'][chan][var]
+        print("data1", data1)
         steps = len(data1)
         
         #convert to temp for cryo sensors
@@ -598,6 +605,9 @@ def plotnow_azrevsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,
                 unit = 'K' 
 
         name = chantoname(chan)
+        print("AZ",AZ)
+        print("REV",REV)
+        print('sig',sig)
 
         plt.pcolormesh(AZ, REV, sig)
         plt.colorbar(label = 'Signal, %s' % unit)
@@ -609,8 +619,8 @@ def plotnow_azrevsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,
         plt.grid()
         plt.show()
 
-def plotnow_azrevsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
-        flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+def plotnow_azrevsig2(fpath,yrmoday,chan,st_hour,st_minute,ed_hour,ed_minute,pp,supply_index=False):
+        '''flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld = []
         i=0
@@ -618,15 +628,14 @@ def plotnow_azrevsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute
                 i+=1
                 flp=select_h5(fpath,yrmoday,st_hour,int(st_minute)-i,ed_hour,int(ed_minute)+i)
 
-        #pp=get_h5_pointing(flp)
+        pp=get_h5_pointing(flp)'''
         #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
         #dd=get_all_demodulated_data(fld_demod, fld)
         #combined=combine_cofe_h5_pointing(dd,pp)
         
         #synchronized data and az values
-        az1 = get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))['az']
-        
-        data1 = get_h5_pointing(p_p.select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute))[chan]   
+        az1 = pp['az']
+        data1 = pp[chan]   
         steps = len(data1)
         
         #convert to temp for cryo sensors
@@ -638,6 +647,9 @@ def plotnow_azrevsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute
                 data1 = convert.convert(data1, 'h')
         if chan == 15:
                 data1 = data1*10. + 273.15
+        if chan == 'Phidget_Temp':
+                data = data + 273.15
+
         
         #resolution
         dx = 1.0
@@ -694,7 +706,7 @@ def plotnow_azrevsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute
         sig = ma.masked_invalid(sig)
                 
         #change units on plot label
-        if chan != 'Phidge':
+        if chan != 'Phidget_Temp':
                 unit = 'deg'
 
         else:
@@ -708,12 +720,12 @@ def plotnow_azrevsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute
         plt.axis([0., 360., 0., rev - 1])
         plt.ylabel('revolution #')
         plt.xlabel('azimuth (deg)')
-        plt.title('%s %s data binned to azimuth and revolution #, date %s, %s:%d - %s:%d' % (name, var, yrmoday, st_hour, int(st_minute), ed_hour, int(ed_minute)))
+        plt.title('%s data binned to azimuth and revolution #, date %s, %s:%d - %s:%d' % (name, yrmoday, st_hour, int(st_minute), ed_hour, int(ed_minute)))
         plt.grid()
         plt.show()
 
-def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
-        flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,combined,supply_index=False):
+        '''flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld = []
         #print('flp',flp)
@@ -724,11 +736,11 @@ def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,s
                 i+=1
                 flp=select_h5(fpath,yrmoday,st_hour,int(st_minute)-i,ed_hour,int(ed_minute)+i)
 
-        pp=get_h5_pointing(flp)
+        pp=get_h5_pointing(flp)'''
         #dd=get_demodulated_data_from_list(fld,supply_index=supply_index)
-        dd=get_all_demodulated_data(fld_demod, fld) 
+        #dd=get_all_demodulated_data(fld_demod, fld) 
         #print('dd', dd)    
-        combined=combine_cofe_h5_pointing(dd,pp) #definitely needed to combine pointing and demod data--no reference to raw data?
+        #combined=combine_cofe_h5_pointing(dd,pp) #definitely needed to combine pointing and demod data--no reference to raw data?
         
         #synchronized data az and el values
         az1, el1 = combined['az'], combined['el']
@@ -807,14 +819,14 @@ def plotnow_azelsig(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,s
         plt.grid()
         plt.show()
 
-def plotnow_azelsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False): #added to try to fix ploting 
-        flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+def plotnow_azelsig2(fpath,yrmoday,chan,st_hour,st_minute,ed_hour,ed_minute,pp,supply_index=False): #added to try to fix ploting 
+        '''flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld_demod =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         fld = []
         i=0
         while len(flp)<3:
                 i+=1
-                flp=select_h5(fpath,yrmoday,st_hour,int(st_minute)-i,ed_hour,int(ed_minute)+i)
+                flp=select_h5(fpath,yrmoday,st_hour,int(st_minute)-i,ed_hour,int(ed_minute)+i)'''
 
         
         #pp=get_h5_pointing(flp)
@@ -845,6 +857,9 @@ def plotnow_azelsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,
                 data = convert.convert(data, 'h')
         if chan == 15:
                 data = data*10. + 273.15
+        if chan == 'Phidget_Temp':
+                data = data*10. + 273.15
+
         steps = len(data)
         
         #set az/el resolution
@@ -889,7 +904,7 @@ def plotnow_azelsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,
         sig = sig/count
         
         #change units on plot label
-        if chan != 'Phidge':
+        if chan != 'Phidget_Temp':
                 unit = 'deg'
 
         else:
@@ -902,9 +917,9 @@ def plotnow_azelsig2(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,
         plt.clim(data.min(),data.max())
         plt.axis([AZ.min(), AZ.max(), EL.min(), EL.max()])
         #plt.axis([0., 360., 0., 90.])
-        plt.ylabel('elevation (deg)')
+        plt.ylabel('elevation %s' % (unit))
         plt.xlabel('azimuth (deg)')
-        plt.title('%s %s data binned to azimuth and elevation, date %s, %s:%d - %s:%d' % (name, var, yrmoday, st_hour, int(st_minute), ed_hour, int(ed_minute)))
+        plt.title('%s data binned to azimuth and elevation, date %s, %s:%d - %s:%d' % (name, yrmoday, st_hour, int(st_minute), ed_hour, int(ed_minute)))
         plt.grid()
         plt.show()
 
@@ -917,7 +932,7 @@ def plotnow_psd(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,suppl
         """
         fs=30
         flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
-        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld_demod, fld =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         i=0
         while len(flp)<3:
                 i+=1
@@ -942,7 +957,7 @@ def plotnow_psd(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,suppl
 
 def plotnow_psd_all(fpath,yrmoday,chan,var,st_hour,st_minute,ed_hour,ed_minute,supply_index=False):
         flp=select_h5(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
-        fld_demod, fld =select_dat(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
+        fld_demod, fld =select_h5_sig(fpath,yrmoday,st_hour,st_minute,ed_hour,ed_minute)
         i=0
         while len(flp)<3:
                 i+=1
@@ -1054,7 +1069,7 @@ def updatedata(cdata):
 def pointing_plot(var,vector,gpstime):
         plt.plot(gpstime,vector,label=str(var))
         plt.xlabel('gpstime')
-        if var == 'az' or var == 'el' or var == 'x tilt' or var == 'y tilt':
+        if var == 'az' or var == 'el' or var == 'x_tilt' or var == 'y_tilt':
            unit = 'deg'
         elif var == 'H1' or var== 'H2' or var == 'H3':
            unit = 'V'
@@ -1067,12 +1082,12 @@ def pointing_plot(var,vector,gpstime):
         plt.title(str(var)+' ' + 'vs. gpstime')
         plt.legend()
         plt.grid()
-        plt.show()
+        
 
 def pointing_plotaz(var,vector,gpstime):
         plt.plot(gpstime,vector,label=str(var))
         plt.xlabel('azimuth')
-        if var == 'el' or var == 'x tilt' or var == 'y tilt':
+        if var == 'el' or var == 'az' or var == 'x_tilt' or var == 'y_tilt':
            unit = 'deg'
         elif var == 'H1' or var== 'H2' or var == 'H3':
            unit = 'V'
@@ -1085,7 +1100,7 @@ def pointing_plotaz(var,vector,gpstime):
         plt.title(str(var)+' ' + 'vs. azimuth')
         plt.legend()
         plt.grid()
-        plt.show()
+        #plt.show()
 
 def linearize_Vexp(Vexp,horn,params='2'):
 
