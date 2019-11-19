@@ -148,7 +148,10 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
             entry = lstbox.get(i)
             reslist.append(entry)
         for val in reslist:
-            chan=nametochan(val)
+            if val[0] == 'H':
+                chan=nametochan(val[:6])
+            else:
+                chan=nametochan(val)
             if datatype=='demod':
                 component=val[-1]
                 if ((component != 'T') and (component != 'Q') and (component != 'U')):
@@ -174,7 +177,10 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
             entry2 = lstbox2.get(i)
             reslist2.append(entry2)
         for val in reslist2:
-            chan=nametochan(val)
+            if val[0] == 'H':
+                chan=nametochan(val[:6])
+            else:
+                chan=nametochan(val)
             if datatype=='demod':
                 component=val[-1]
                 if ((component != 'T') and (component != 'Q') and (component != 'U')):
