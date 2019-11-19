@@ -198,7 +198,10 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
         selection3 = lstbox3.curselection()
         entry3 = lstbox3.get(selection3[0])
         val=entry3
-        chan=nametochan(val)
+        if val[0] == 'H':
+            chan = nametochan(val[:6])
+        else:
+            chan = nametochan(val)
         if datatype=='demod':
             component=val[-1]
             if ((component != 'T') and (component != 'Q') and (component != 'U')):
@@ -237,7 +240,10 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
         selection4 = lstbox4.curselection()
         entry4 = lstbox4.get(selection4[0])
         val=entry4
-        chan=nametochan(val[:6])
+        if val[0] == 'H':
+            chan = nametochan(val[:6])
+        else:
+            chan = nametochan(val)
 
         if datatype=='demod':
             component=val[-1]
