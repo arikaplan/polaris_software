@@ -1364,10 +1364,10 @@ class interface:
 				vcryo15 = datacryo15*max_voltage*2/(2**bit_depth) - max_voltage
 				
 				#convert from volts to temperature    
-				tcryo12 = vcryo12*10. + 273.15
-				tcryo13 = convert.convert(vcryo13, 'e')
-				tcryo14 = convert.convert(vcryo14, 'h')
-				tcryo15 = vcryo15*10. + 273.15
+				tcryo12 = vcryo12*10. + 273.15 # Backend TSS
+				tcryo13 = convert.convert(vcryo13, 'e') # Amplifier
+				tcryo14 = convert.convert(vcryo14, 'h') # Cooler
+				tcryo15 = vcryo15*10. + 273.15 # Calibrator
 
 				
 			#if acq_tel is running, get average of latest saved file rather than realtime feedback

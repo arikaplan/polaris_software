@@ -316,10 +316,20 @@ def combine_cofe_h5_pointing(dd, h5pointing, outfile='combined_data.pkl'):
 	azout = np.interp(dd['rev'], prev, paz)
 	azout = np.mod(azout, 360.)
 	elout = np.interp(dd['rev'], prev, h5pointing['el'])
+	calout = np.interp(dd['rev'], prev, h5pointing['Calibrator'])
+	ampout = np.interp(dd['rev'], prev, h5pointing['Amplifier'])
+	coolout = np.interp(dd['rev'], prev, h5pointing['Cooler'])
+	backendout = np.interp(dd['rev'], prev, h5pointing['Backend TSS'])
+	flagout = np.interp(dd['rev'], prev, h5pointing['flag'])
+	xtiltout = np.interp(dd['rev'], prev, h5pointing['x tilt'])
+	ytiltout = np.interp(dd['rev'], prev, h5pointing['y tilt'])
+	phtempout = np.interp(dd['rev'], prev, h5pointing['Phidget Temp'])
 	#pazw = np.where(abs(np.diff(azout) + 359.5) < 3)[0]
 
 	f = open(outfile, 'wb')
-	combined_data = {'sci_data': dd, 'az': azout, 'el': elout, 'gpstime': dd['rev']}
+	combined_data = {'sci_data': dd, 'az': azout, 'el': elout, 'gpstime': dd['rev'], 'Calibrator': calout,
+					 'Amplifier': ampout, 'Cooler': coolout, 'Backend TSS': backendout, 'flag': flagout,
+					 'x tilt': xtiltout, 'y tilt': ytiltout, 'Phidget Temp': phtempout}
 	cPickle.dump(combined_data, f, protocol=-1)
 	f.close()
 	return combined_data

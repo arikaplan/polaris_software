@@ -84,11 +84,8 @@ add elevation move speed
 
 in plot_tool.py change loading/saving of last configuration to delte previous saved config file, you dont need to save all of them
 
-reorganize file structure
-
 might be worth adding cabibility to plot_tool to plot tilt vs azimuth
 
-look into making paths relative (rather than absolute)
 
 maybe flip color scales on color plots (make more negative red, rather than blue)
 
