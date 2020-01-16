@@ -1440,6 +1440,7 @@ class interface:
 			#emulator (1) vs encoder(0)
 			#gps lock
 			#acq_tel on/off
+			#will be something like 1011 for cal out or 10011 for cal in
 			#note until I figure this out cal_in isnt saved when its 0, it is saved when its one, so if the flag is 4 digits it means cal_in=0
 			flag = str(cal_in)+str(cal_out)+str(acq_type)+str(gpslock)+str(acq_tel_status)
 
