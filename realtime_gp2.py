@@ -1067,22 +1067,25 @@ def updatedata(cdata):
                 cdata['lastpfile']=flp[-1]
         return cdata
 
-def pointing_plot(var,vector,gpstime,fig,ax1,ax2,ax3):
+def pointing_plot(var,vector,gpstime,fig,A1,A2,A3):
         
         #plt.plot(gpstime,vector,label=str(var) )
         plt.xlabel('gpstime')
         if var == 'az' or var == 'el' or var == 'x_tilt' or var == 'y_tilt':
            unit = 'deg'
-           ax3.plot(gpstime,vector,label=str(var))
+           A3.plot(gpstime,vector,label=str(var))
+           A3.set_ylabel("degrees")
 
         elif var == 'H1' or var== 'H2' or var == 'H3':
            unit = 'V'
-           ax1.plot(gpstime,vector,label=str(var))
+           A1.plot(gpstime,vector,label=str(var))
+           A1.set_ylabel("voltage (V)")
         elif var == 'gpstime':
                 unit = ''
         else:
            unit = 'K'
-           ax2.plot(gpstime,vector,label=str(var))
+           A2.plot(gpstime,vector,label=str(var))
+           A2.set_ylabel("temperature (K)")        
         #plt.legend()
         plt.grid()
         
@@ -1106,7 +1109,6 @@ def pointing_plotaz(var,vector,gpstime, fig,ax1,ax2,ax3):
         #plt.title(str(var)+' ' + 'vs. azimuth')
         #plt.legend()
         plt.grid()
-        #plt.show()
 
 def linearize_Vexp(Vexp,horn,params='2'):
 

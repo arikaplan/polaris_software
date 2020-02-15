@@ -152,6 +152,7 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
     utdict = {}
     ddict = {}
     taglist=[]
+
     
 
 
@@ -254,10 +255,12 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
 		ut = sorted(ut)
 		utdict.update({tag:ut})
 		ddict.update({tag:d})
+		print('ddict1',ddict)
+		
 		
 
 		netfilelist.update({tag:filelist})
-		print('netfilelist', netfilelist)
+		#print('netfilelist', netfilelist)
 
 
 		taglist.append(tag)
@@ -274,9 +277,10 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
 		mm=os.path.dirname(filelist[0])[-4:-2]
 		day=os.path.dirname(filelist[0])[-2:]
 		yrmoday = ''+yyyy+mm+day
-		print('yrmoday', yrmoday)
+		#print('yrmoday', yrmoday)
 		yrmodaylist.update({tag:yrmoday})
-		print('yrmodaylist',yrmodaylist)
+		#print('yrmodaylist',yrmodaylist)
+		global fpath 
 		fpath = os.path.dirname(os.path.dirname(os.path.dirname(fname)))
 		#***********LOAD DATA
 		flp=p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute)
@@ -286,7 +290,7 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
 		while len(flp)<3:
 			i+=1
 			flp=p_p.select_h5(fpath,yrmoday,mihour,int(miminute)-i,mxhour,int(mxminute)+i)
-		print('flp', len(flp))	
+		#print('flp', len(flp))	
 
 		pp=rt.get_h5_pointing(flp)
 		#print('pp', pp[gpstime])
@@ -301,6 +305,45 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
 		#***********
 
 		print('datalist',datalist.get())
+
+    def shuffleaxes(reslist,ax1,ax2,ax3):
+	    #the idea is to create a three character string representing the order of the axes, and then to use that to construct the dictionary that the axes are called from
+	    order = ""
+	    #looking at the first entry to see what the leftmost axis should be
+	    print("thing", "az el x_tilt y_tilt".find(reslist[0])!=-1)
+	    if "az el x_tilt y_tilt".find(reslist[0])!=-1:
+	        order += "d"
+	    elif "Amplifier Cooler Backend_TSS Calibrator Phidget_Temp".find(reslist[0])!=-1:
+	        order += "t"
+	    elif reslist[0] in "H1HiAC_T H1HiAC_Q H1HiAC_U H1HiDC H1LoAC_T H1LoAC_Q H1LoAC_U H1LoDC H2HiAC_T H2HiAC_Q H2HiAC_U H2HiDC H2LoAC H2LoDC\
+                    H3HiAC_T H3HiAC_Q H3HiAC_U H3HiDC H3LoAC_T H3LoAC_Q H3LoAC_U H3LoDC":
+	        order += "v"
+	    #looking to see if there are items of other data types, but only checking for existance, not the number of
+	    item=1
+	    while (item<len(reslist) and len(order)<=2):
+	        if reslist[item] in "az el x_tilt y_tilt" and order.find("d")==-1:
+	            order+="d"
+	        elif reslist[item] in "Amplifier Cooler Backend_TSS Calibrator Phidget_Temp" and order.find("t")==-1:
+	            order+="t"
+	        elif order.find("v")==-1 and reslist[item] in "H1HiAC_T H1HiAC_Q H1HiAC_U H1HiDC H1LoAC_T H1LoAC_Q H1LoAC_U H1LoDC\
+                    H2HiAC_T H2HiAC_Q H2HiAC_U H2HiDC H2LoAC H2LoDC H3HiAC_T H3HiAC_Q H3HiAC_U H3HiDC H3LoAC_T H3LoAC_Q H3LoAC_U H3LoD":
+	            order+="v"
+	        print('order1',reslist[item],order)
+	        item+=1
+	    #if only one data type, shut the other axes off
+	    if len(order)==1:
+	        ax2.set_axis_off()
+	        ax3.set_axis_off()
+	        #however there still needs to be a place in the dict for the other data types
+	        order+="".join(set(["v","d","t"]).difference(set([order[0]])))
+	        print('order',order)
+	    #the same with two data types
+	    if len(order)==2:
+	        ax3.set_axis_off()
+	        order+="".join(set(["v","d","t"]).difference(set([order[0],order[1]])))
+	        print('order',order)
+	    #the string takes the form of "vdt" or some combo of that so the keys are v,d,t
+	    return {order[0]:ax1,order[1]:ax2,order[2]:ax3}
 
     def use_some_data():
     	global reslist3
@@ -326,36 +369,36 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
     	ax2=ax1.twinx()
         ax3=ax1.twinx()
         ax3.spines[u"right"].set_position(("outward",50))
-        ax1.set_ylabel("voltage (V)")
-        ax2.set_ylabel("temperature (K)")
-        ax3.set_ylabel("degrees")
         return ax1,ax2,ax3
 
 
     def select():
         reslist = list()
         selection = lstbox1.curselection()
-        fig,ax1=plt.subplots()
-        ax1, ax2,ax3 = multipleyaxis(ax1)
-        
+        fig,ax1=plt.subplots(figsize=(9,9))
+        ax1,ax2,ax3 = multipleyaxis(ax1)
 
         for i in selection:
 		    entry = lstbox1.get(i)
 		    reslist.append(entry)
         legends = []
+        print('reslist',reslist)
+        #print('typereslist', type(reslist),type(reslist[0]),reslist[0])
+        axdict = shuffleaxes(reslist,ax1,ax2,ax3)
         for val in reslist:
 			for j,i in enumerate(reslist3):
-				if "Backend_TSS Calibrator az el x_tilt y_tilt".find(val[:6])!=-1:
-				    y=netpp[i][val]   
-				    t=normalize(netpp[i]['gpstime'])
-				    display_pointing = rt.pointing_plot(val,y,t,fig,ax1,ax2,ax3)
+				print('j5',j)
+				if "Backend_TSS Calibrator az el x_tilt y_tilt ".find(val[:6])!=-1:
+				    y=netpp[taglist[j]][val]   
+				    t=normalize(netpp[taglist[j]]['gpstime'])
+				    display_pointing = rt.pointing_plot(val,y,t,fig,axdict["v"],axdict["t"],axdict["d"])
 
 				elif "Phidget_Temp ".find(val[:6])!=-1:
 				    try: 
-				        y=netpp[i][val]   
+				        y=netpp[taglist[j]][val]   
 				        y = y + 273.15      
-				        t=normalize(netpp[i]['gpstime'])  
-				        display_pointing=rt.pointing_plot(val,y,t,fig,ax1,ax2,ax3)
+				        t=normalize(netpp[taglist[j]]['gpstime'])  
+				        display_pointing=rt.pointing_plot(val,y,t,fig,axdict["v"],axdict["t"],axdict["d"])
 
 				        
 				    except:
@@ -367,12 +410,17 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
 
 				        if ((component != 'T') and (component != 'Q') and (component != 'U')) and chan != 'ch16':
 				            component='T'
+				            axdict["v"].plot(normalize(utdict[taglist[j]]),ddict[taglist[j]][chan][component],label=val + " " +taglist[j])
+				            axdict["v"].set_ylabel("voltage (V)")
 				        
 				        if val == 'Cooler' or val == 'Amplifier':
 				            yaxis = 'K'
+				            axdict["t"].plot(normalize(utdict[taglist[j]]),ddict[taglist[j]][chan][component],label=val + " " +taglist[j])
+				            axdict["t"].set_ylabel("Temperature (K)")
 				        else:
 				            yaxis = 'V'
-				        ax1.plot(normalize(utdict[i]),ddict[i][chan][component],label=val + " " +taglist[j])
+				            axdict["v"].plot(normalize(utdict[taglist[j]]),ddict[taglist[j]][chan][component],label=val + " " +taglist[j])
+				            axdict["v"].set_ylabel("voltage (V)")
 				        plt.xlabel('Hour')
 				print('legends thing', val + ': ' + taglist[j])
 				legends.append(val + ': ' + taglist[j])	
@@ -387,7 +435,7 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
     def selectfft():
         reslist2 = list()
         selection2 = lstbox2.curselection()
-        plt.figure()
+        plt.figure(figsize=(9,9))
         legends = []
 
         if datatype=='demod':
@@ -402,7 +450,7 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
         		legends.append(val + ': ' + taglist[j])	
         		if val != 'Phidget_Temp':
         			if 'az el Backend_TSS Calibrator x_tilt y_tilt gpstime'.find(val[:6])!=-1:
-        				freq,psd=cu.nps(netpp[i][val],samprate,minfreq=minfreq)
+        				freq,psd=cu.nps(netpp[taglist[j]][val],samprate,minfreq=minfreq)
         			else:
         				chan=nametochan(val[:6])
         				if datatype=='demod':
@@ -419,28 +467,32 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
 					    print("Phidget_Temp is not working yet")	
         		
         plt.xlabel('Frequency [Hz]')
-        plt.ylabel(r'ASD [$\frac{nV}{\sqrt{Hz}}$]')
+        plt.ylabel(r"ASD [$\frac{nV}{\sqrt{Hz}}$]")
         plt.legend(labels = legends)
         plt.show(block=False)
-            
-    def selectsgram():
+
+
+           
+    def selectsgram(): #must use more than 1084 data samples--so more than 1 h5 file
         selection3 = lstbox3.curselection()
         entry3 = lstbox3.get(selection3[0])
         val=entry3
-        if datatype=='demod':
+    	for j,i in enumerate(reslist3):
             if val != 'Phidget_Temp':
                 if 'az el Amplifier Cooler Backend_TSS Calibrator x_tilt y_tilt gpstime'.find(val[:6]) != -1:
-                    spectrogram=mk_spectrogram(rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))[val],sampsperspec=sampsperspec_sgram_d)
+                    spectrogram=mk_spectrogram(rt.get_h5_pointing(p_p.select_h5(fpath,yrmodaylist[taglist[j]],netmihour[taglist[j]],netmiminute[taglist[j]],netmxhour[taglist[j]],netmxminute[taglist[j]]))[val],sampsperspec=sampsperspec_sgram_d)
                     xfreq=np.arange(np.shape(spectrogram)[1])*(samprate/2.)/(np.shape(spectrogram)[1])  #estimated sample rate
                 else:
                     chan=nametochan(val[:6])
                     component=val[-1]
                     if ((component != 'T') and (component != 'Q') and (component != 'U')):
                         component='T'
-                    spectrogram=mk_spectrogram(d[chan].flatten()[component],sampsperspec=sampsperspec_sgram_d)
+                    spectrogram=mk_spectrogram(ddict[i][chan].flatten()[component],sampsperspec=sampsperspec_sgram_d)
+                    print('ddict',len(ddict[i][chan]))
+                    print('spectrogram',spectrogram)
                     xfreq=np.arange(np.shape(spectrogram)[1])*(samprate/2.)/(np.shape(spectrogram)[1])  #estimated sample rate
             else:
-                spectrogram=mk_spectrogram(rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))['Phidget_Temp'],sampsperspec=sampsperspec_sgram_d)
+                spectrogram=mk_spectrogram(rt.get_h5_pointing(p_p.select_h5(fpath,yrmodaylist[taglist[i]],mihour,miminute,mxhour,mxminute))['Phidget_Temp'],sampsperspec=sampsperspec_sgram_d)
                 xfreq=np.arange(np.shape(spectrogram)[1])*(samprate/2.)/(np.shape(spectrogram)[1])  #estimated sample rate
 
         
@@ -449,14 +501,14 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
         vmax=max(spectrogram[0,vcut:])
         plt.figure()
         if datatype=='demod':
-            plt.title('%s Spectrogram from %s-%s-%s' %(val,mm,day,yyyy))
+            plt.title('%s Spectrogram from %s-%s-%s' %(val,yrmodaylist[taglist[0]][4:6],yrmodaylist[taglist[0]][6:],yrmodaylist[taglist[0]][0:4]))
         plt.xlabel('Frequency [Hz]')
         plt.ylabel('Spectrum index')        
         plt.pcolormesh(xfreq,yspectra,spectrogram,vmax=vmax)
         plt.colorbar()
         plt.figure()
         if datatype=='demod':
-            plt.title('%s Spectrogram from %s-%s-%s' %(val,mm,day,yyyy))
+            plt.title('%s Spectrogram from %s-%s-%s' %(val,yrmodaylist[taglist[0]][4:6],yrmodaylist[taglist[0]][6:],yrmodaylist[taglist[0]][0:4]))
         plt.xlabel('Frequency [Hz]')
         plt.ylabel('Spectrum index') 
         lsg=np.log(spectrogram/vmax)
@@ -468,24 +520,23 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
         selection4 = lstbox4.curselection()
         entry4 = lstbox4.get(selection4[0])
         val=entry4
-        chan=nametochan(val[:6])
-
+        
         if datatype=='demod':
-            component=val[-1]
-            if ((component != 'T') and (component != 'Q') and (component != 'U')):
-                component='T'
-            if val != 'Phidget_Temp':
-                pseudomap=mk_pseudomap(d[chan].flatten()[component],sampsperline=sampsperline_d)
-            else: 
-                pseudomap=mk_pseudomap(rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))['Phidget_Temp'],sampsperline=sampsperline_d) 
-                pseudomap = pseudomap + 273.15
-        if datatype=='raw':
-            pseudomap=mk_pseudomap(d[chan].flatten(),sampsperline=sampsperline_r)
+        	for j,i in enumerate(reslist3):
+	            component=val[-1]
+	            if ((component != 'T') and (component != 'Q') and (component != 'U')):
+	                component='T'
+	            if val != 'Phidget_Temp':
+	            	chan=nametochan(val[:6])
+	                pseudomap=mk_pseudomap(ddict[taglist[j]][chan].flatten()[component],sampsperline=sampsperline_d)
+	            else: 
+	            	pseudomap=mk_pseudomap(rt.get_h5_pointing(p_p.select_h5(fpath,yrmodaylist[taglist[j]],netmihour[taglist[j]],netmiminute[taglist[j]],netmxhour[taglist[j]],netmxminute[taglist[j]]))['Phidget_Temp'],sampsperline=sampsperline_d)
+	            	pseudomap = pseudomap + 273.15
         plt.figure()
         if datatype=='demod':
-            plt.title('%s Pseudomap from %s-%s-%s' %(val,mm,day,yyyy))
+            plt.title('%s Pseudomap from %s-%s-%s' %(val,yrmodaylist[taglist[0]][4:6],yrmodaylist[taglist[0]][6:],yrmodaylist[taglist[0]][0:4]))
         if datatype=='raw':
-            plt.title('%s Pseudomap from %s-%s-%s' %(val,mm,day,yyyy))
+            plt.title('%s Pseudomap from %s-%s-%s' %(val,yrmodaylist[taglist[0]][4:6],yrmodaylist[taglist[0]][6:],yrmodaylist[taglist[0]][0:4]))
         plt.xlabel('Time [Samples]')
         plt.ylabel('Time index')        
         plt.pcolormesh(pseudomap)
@@ -497,40 +548,39 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
         selection = lstbox5.curselection()
         plt.figure()
         if datatype=='demod':
-            plt.title('Sig vs. az vs. rev from %s %s %s' %(mm,day,yyyy))
+            plt.title('Sig vs. az vs. rev from %s %s %s' %(yrmodaylist[taglist[0]][4:6],yrmodaylist[taglist[0]][6:],yrmodaylist[taglist[0]][0:4]))
         if datatype=='raw':
-            plt.title('Sig vs. az vs. rev from %s %s %s' %(mm,day,yyyy))
+            plt.title('Sig vs. az vs. rev from %s %s %s' %(yrmodaylist[taglist[0]][4:6],yrmodaylist[taglist[0]][6:],yrmodaylist[taglist[0]][0:4]))
 
         for i in selection:
             entry = lstbox5.get(i)
             reslist.append(entry)
             for val in reslist:
-        
-                if "el Backend_TSS Calibrator x_tilt y_tilt gpstime".find(val[:6])!=-1:
-                    rt.plotnow_azrevsig2(fpath=fpath,yrmoday=yrmoday,chan=val,st_hour=mihour,st_minute=miminute,ed_hour=mxhour,ed_minute=mxminute,pp=pp)
-                elif "Phidget_Temp".find(val[:6])!=-1:
-                    try: 
-                        rt.plotnow_azrevsig2(fpath=fpath,yrmoday=yrmoday,chan=val,st_hour=mihour,st_minute=miminute,ed_hour=mxhour,ed_minute=mxminute,pp=pp)
-                    except:
-                        print('error Phidget_Temp is not working with this data set')
-                else:   
-                    chan=nametochan(val[:6])
-                    if datatype=='demod':
-                            component=val[-1]
-                            if ((component != 'T') and (component != 'Q') and (component != 'U')) and chan != 'ch16':
-                                component ='T'    
-                    rt.plotnow_azrevsig(fpath=fpath,yrmoday=yrmoday,chan=chan,var=component,st_hour=mihour,st_minute=miminute,ed_hour=mxhour,ed_minute=mxminute,combined=combined)  
-            
-        #plt.show(block=False)
+        		for j,i in enumerate(reslist3):
+        			if "el Backend_TSS Calibrator x_tilt y_tilt gpstime".find(val[:6])!=-1:
+        				rt.plotnow_azrevsig2(fpath=fpath,yrmoday=yrmodaylist[taglist[j]],chan=val,st_hour=netmihour[taglist[j]],st_minute=netmiminute[taglist[j]],ed_hour=netmxhour[taglist[j]],ed_minute=netmxminute[taglist[j]],pp=pp)
+        			elif "Phidget_Temp".find(val[:6])!=-1:
+						try: 
+						    rt.plotnow_azrevsig2(fpath=fpath,yrmoday=yrmodaylist[taglist[j]],chan=val,st_hour=netmihour[taglist[j]],st_minute=netmiminute[taglist[j]],ed_hour=netmxhour[taglist[j]],ed_minute=netmxminute[taglist[j]],pp=pp)
+						except:
+						    print('error Phidget_Temp is not working with this data set')
+
+        			else:
+						chan=nametochan(val[:6])
+						if datatype=='demod':
+							component=val[-1]
+				            if ((component != 'T') and (component != 'Q') and (component != 'U')) and chan != 'ch16':
+				                component ='T'
+			                rt.plotnow_azrevsig(fpath=fpath,yrmoday=yrmodaylist[taglist[j]],chan=chan,var=component,st_hour=netmihour[taglist[j]],st_minute=netmiminute[taglist[j]],ed_hour=netmxhour[taglist[j]],ed_minute=netmxminute[taglist[j]],combined=combined)  
 
     def selectsigvsazvsel():
         reslist = list()
         selection = lstbox6.curselection()
-        plt.figure()
+        plt.figure(figsize=(30,25))
         if datatype=='demod':
-            plt.title('Sig vs. az vs. el from %s %s %s' %(mm,day,yyyy))
+            plt.title('Sig vs. az vs. el from %s %s %s' %(yrmodaylist[taglist[0]][4:6],yrmodaylist[taglist[0]][6:],yrmodaylist[taglist[0]][0:4]))
         if datatype=='raw':
-            plt.title('Sig vs. az vs. el from %s %s %s' %(mm,day,yyyy))
+            plt.title('Sig vs. az vs. el from %s %s %s' %(yrmodaylist[taglist[0]][4:6],yrmodaylist[taglist[0]][6:],yrmodaylist[taglist[0]][0:4]))
         
         for i in selection:
             entry = lstbox6.get(i)
@@ -540,22 +590,23 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
             #t=rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))['az']   
             #display_pointing=rt.pointing_plotaz(val,y,t)
             #else:
-            if "az el Backend_TSS Calibrator x_tilt y_tilt gpstime Phidget_Temp".find(val[:6])!=-1:
-                if "Phidget_Temp".find(val[:6])!=-1:
-                    try:
-                        rt.plotnow_azelsig2(fpath=fpath,yrmoday=yrmoday,chan=val,st_hour=mihour,st_minute=miminute,ed_hour=mxhour,pp=pp,ed_minute=mxminute)
-                    except:
-                        print('Phidget_Temp is not working')
-                else:
-                    rt.plotnow_azelsig2(fpath=fpath,yrmoday=yrmoday,chan=val,st_hour=mihour,st_minute=miminute,ed_hour=mxhour,pp=pp,ed_minute=mxminute)
-            else:
-                chan=nametochan(val[:6])
-                if datatype=='demod':
-                        component=val[-1]
-                        if ((component != 'T') and (component != 'Q') and (component != 'U')) and chan != 'ch16':
-                            component ='T'
-                rt.plotnow_azelsig(fpath=fpath,yrmoday=yrmoday,chan=chan,var=component,st_hour=mihour,st_minute=miminute,ed_hour=mxhour,combined=combined,ed_minute=mxminute)
-            
+            for j,i in reslist3:
+	            if "az el Backend_TSS Calibrator x_tilt y_tilt gpstime Phidget_Temp".find(val[:6])!=-1:
+	                if "Phidget_Temp".find(val[:6])!=-1:
+	                    try:
+	                        rt.plotnow_azelsig2(fpath=fpath,yrmoday=yrmodaylist[taglist[j]],chan=val,st_hour=netmihour[taglist[j]],st_minute=netmiminute[taglist[j]],ed_hour=netmxhour[taglist[j]],pp=pp,ed_minute=netmxminute[taglist[j]])
+	                    except:
+	                        print('Phidget_Temp is not working')
+	                else:
+	                    rt.plotnow_azelsig2(fpath=fpath,yrmoday=yrmodaylist[taglist[j]],chan=val,st_hour=netmihour[taglist[j]],st_minute=netmiminute[taglist[j]],ed_hour=netmxhour[taglist[j]],pp=pp,ed_minute=netmxminute[taglist[j]])
+	            else:
+	                chan=nametochan(val[:6])
+	                if datatype=='demod':
+	                    component=val[-1]
+    					if (component != 'T') and (component != 'Q') and (component != 'U') and chan != 'ch16':
+	                        component='T'
+	                rt.plotnow_azelsig(fpath=fpath,yrmoday=yrmodaylist[taglist[j]],chan=chan,var=component,st_hour=netmihour[taglist[j]],st_minute=netmiminute[taglist[j]],ed_hour=netmxhour[taglist[j]],combined=combined,ed_minute=netmxminute[taglist[j]])
+	            
         #plt.show(block=False)  
 
     def selectpft(): #no listbox 7 currently since function is already taken care of
@@ -568,19 +619,20 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
             reslist.append(entry)
 
         for val in reslist:
-            y=rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))[val]             
-            t=rt.get_h5_pointing(p_p.select_h5(fpath,yrmoday,mihour,miminute,mxhour,mxminute))['gpstime']
-            t_0=t[0]
-            for i in range(len(t)):
-                t[i]=t[i]-t_0
-            display_pointing = rt.pointing_plot(val,y,t)
-            plt.show(block=False)
+        	for j,i in reslist3:
+	            y=rt.get_h5_pointing(p_p.select_h5(fpath,yrmodaylist[taglist[j]],netmihour[taglist[j]],netmiminute[taglist[j]],netmxhour[taglist[j]],netmxminute[taglist[j]]))[val]             
+	            t=rt.get_h5_pointing(p_p.select_h5(fpath,yrmodaylist[taglist[j]],netmihour[taglist[j]],netmiminute[taglist[j]],netmxhour[taglist[j]],netmxminute[taglist[j]]))['gpstime']
+	            t_0=t[0]
+	            for i in range(len(t)):
+	                t[i]=t[i]-t_0
+	            display_pointing = rt.pointing_plot(val,y,t)
+	            plt.show(block=False)
 
     def selectsigvsaz(): 
         reslist = list()
         selection = lstbox8.curselection()
         legends = []
-        fig,ax1=plt.subplots()
+        fig,ax1=plt.subplots(figsize=(9,9))
         ax1, ax2,ax3 = multipleyaxis(ax1)
 
         if datatype=='demod':
@@ -591,13 +643,14 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
         for i in selection:
             entry = lstbox8.get(i)
             reslist.append(entry)
+        axdict = shuffleaxes(reslist,ax1,ax2,ax3)
         for val in reslist:  
         	for j, i in enumerate(reslist3):  
         	    legends.append(val + ': ' + taglist[j])        
 	            if "az el Cooler Amplifier Backend_TSS Calibrator x_tilt y_tilt Phidget_Temp".find(val[:6])!=-1:
 	                y=netpp[i][val]   
 	                t=normalize(netpp[i]['az'])   
-	                display_pointing=rt.pointing_plotaz(val,y,t,fig,ax1,ax2,ax3)
+	                display_pointing=rt.pointing_plotaz(val,y,t,fig,axdict['v'],axdict['t'],axdict['d'])
 
 	            else:
 	                chan=nametochan(val[:6])
@@ -606,18 +659,21 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
 	                        if ((component != 'T') and (component != 'Q') and (component != 'U')) and chan != 'ch16':
 	                            component ='T'
 	                netcombined[i]['az']=normalize(netcombined[i]['az'])
-                	rt.plotnow(yrmoday=yrmodaylist[i],chan=chan,var=component, xaxis = 'az',st_hour='00',st_minute='00',ed_hour='23',ed_minute='59',combined=netcombined[i],ax1=ax1,ax2=ax2,ax3=ax3)
-            	 
+                	rt.plotnow(yrmoday=yrmodaylist[taglist[j]],chan=chan,var=component, xaxis = 'az',st_hour=netmihour[taglist[j]],st_minute=netmiminute[taglist[j]],ed_hour=netmxhour[taglist[j]],\
+                		ed_minute=netmxminute[taglist[j]],combined=netcombined[i],ax1=axdict["v"],ax2=axdict["t"],ax3=axdict["d"])
+        axdict["v"].set_ylabel("voltage (V)") 
+        axdict["t"].set_ylabel("Temperature (K)")
+        axdict["d"].set_ylabel("degrees")   	 
         print('legends scidata', legends)
         plt.legend(labels=legends)
         plt.show()
-	
+
     btn = ttk.Button(frame, text="Select for TOI", command=select)
     btn.grid(column=1, row=1)
-    
+
     btn2 = ttk.Button(frame, text="Select for ASD", command=selectfft)
     btn2.grid(column=3, row=1)
-    
+
     btn3 = ttk.Button(frame, text="Select for Spectrogram", command=selectsgram)
     btn3.grid(column=5, row=1)
     
@@ -641,9 +697,12 @@ def plot_some_chans2(datatype='demod',plottype='toi',filelist=None,component='T'
 	
     btn10 = ttk.Button(frame,text='Load data', command=load_some_data)
     btn10.grid(column=15, row=1)
-    
+
+
     main.mainloop()
     return
+    
+    
 
 if __name__=="__main__":
 
