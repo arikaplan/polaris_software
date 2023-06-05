@@ -26,4 +26,5 @@ on the sky or celestial objects by either tracing a box around the object or lin
 
 The last tab enables setting configuration parameters for the telescope motion such as speed and acceleration, as well as calibrating 
 pointing offsets.
+
 <img width="494" alt="Screen Shot 2023-06-05 at 3 34 06 PM" src="https://github.com/arikaplan/polaris_software/assets/8053891/2a9e8c02-a508-4c71-bfa1-090ced125586">
