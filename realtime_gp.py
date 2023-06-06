@@ -4,8 +4,10 @@ set of scripts to run while taking data for first look analysis
 import sys
 import os
 #sys.path.append('telescope_control')
-sys.path.append('utils_meinhold')
-sys.path.append('utils_zonca')
+#sys.path.append('utils_meinhold')
+#sys.path.append('utils_zonca')
+sys.path.append('D:\\software_git_repos\\Polaris\\polaris_software\\utils_meinhold')
+sys.path.append('D:\\software_git_repos\\Polaris\\polaris_software\\utils_zonca')
 sys.path.append('VtoT')
 from glob import glob
 import os
@@ -316,20 +318,11 @@ def combine_cofe_h5_pointing(dd, h5pointing, outfile='combined_data.pkl'):
 	azout = np.interp(dd['rev'], prev, paz)
 	azout = np.mod(azout, 360.)
 	elout = np.interp(dd['rev'], prev, h5pointing['el'])
-	calout = np.interp(dd['rev'], prev, h5pointing['Calibrator'])
-	ampout = np.interp(dd['rev'], prev, h5pointing['Amplifier'])
-	coolout = np.interp(dd['rev'], prev, h5pointing['Cooler'])
-	backendout = np.interp(dd['rev'], prev, h5pointing['Backend TSS'])
 	flagout = np.interp(dd['rev'], prev, h5pointing['flag'])
-	xtiltout = np.interp(dd['rev'], prev, h5pointing['x tilt'])
-	ytiltout = np.interp(dd['rev'], prev, h5pointing['y tilt'])
-	phtempout = np.interp(dd['rev'], prev, h5pointing['Phidget Temp'])
 	#pazw = np.where(abs(np.diff(azout) + 359.5) < 3)[0]
 
 	f = open(outfile, 'wb')
-	combined_data = {'sci_data': dd, 'az': azout, 'el': elout, 'gpstime': dd['rev'], 'Calibrator': calout,
-					 'Amplifier': ampout, 'Cooler': coolout, 'Backend TSS': backendout, 'flag': flagout,
-					 'x tilt': xtiltout, 'y tilt': ytiltout, 'Phidget Temp': phtempout}
+	combined_data = {'sci_data': dd, 'az': azout, 'el': elout, 'gpstime': dd['rev'], 'flag': flagout}
 	cPickle.dump(combined_data, f, protocol=-1)
 	f.close()
 	return combined_data
@@ -458,17 +451,17 @@ def plotnow(fpath,yrmoday,chan,var, xaxis,st_hour,st_minute,ed_hour,ed_minute,su
 
 	#sort data according to sorted azimuth
 	data = [x for _,x in sorted(zip(xa,data))]
-	data = np.asarray(data)
 	xa = sorted(xa)
+	
 	#convert to temp for cryo sensors
-	if int(chan[2:]) == 12:
+	if chan == 12:
 		data = data*10. + 273.15
-	if int(chan[2:]) == 13:
+	if chan == 13:
 		data = convert.convert(data, 'e')
-	if int(chan[2:]) == 14:
+	if chan == 14:
 		data = convert.convert(data, 'h')
-	if int(chan[2:]) == 15:
-		data = data*10 + 273.15
+	if chan == 15:
+		data = data*10. + 273.15
 	#change units on plot label
 	if int(chan[2:]) < 12:
 		unit = 'V'
@@ -874,7 +867,7 @@ def updatedata(cdata):
 		cdata['lastpfile']=flp[-1]
 	return cdata
 
-def pointing_plot(var,vector,gpstime):
+def pointing_plot(var,vector,gpstime, yrmoday, st_hour, st_minute):
 
 	t = (gpstime-gpstime[0])/1000
 	l = 'seconds'
@@ -899,7 +892,7 @@ def pointing_plot(var,vector,gpstime):
 	   unit = 'K'
 
 	plt.ylabel(str(var) + ' (%s)' % unit)
-	plt.title(str(var)+' ' + 'vs. gpstime')
+	plt.title(str(var)+' ' + 'vs. gpstime, date: %s %s:%s' % (yrmoday, st_hour, st_minute))
 	plt.legend()
 	plt.grid()
 	plt.show()
