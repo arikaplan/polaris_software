@@ -1,7 +1,7 @@
 This is a software repo for interfacing with the 2 meter telescope used in my PhD research. 
 The folder telescope_control consists of a GUI which handles sending servo controls to the azimuth and elevation motors, monitering housekeeping data to insure 
 data is being taken under optimal conditions, and data acquisition. There are also a number of files for post-analysis such as realtime_gp 
-and the notebooks used for a variety of tasks in the notebooks folder.
+and the notebooks used for a variety of analysis tasks in the notebooks folder.
 
 Basic Layout of the user interface. Bottom left allows for system monitering of various parameters of interest, as well as buttons to 
 save your current interface configuration, turn the motor on/off, stop motion or exit GUI, and begin acquiring science data (acq_tel) 
