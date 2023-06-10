@@ -32,20 +32,20 @@ pointing offsets.
 
 ## Results from selected analysis notebooks:
 
-Atmospheric emmission modeled with ATMOS32 and plotted against foreground spectral behavior with data simulated using PySM3 for the planck sky model (https://github.com/arikaplan/polaris_software/blob/master/notebook/atmospheric%20plot.ipynb)
+Atmospheric emmission modeled with ATMOS32 and plotted against foreground spectral behavior with data simulated using PySM3 for the planck sky model ([atmospheric plot.ipynb]https://github.com/arikaplan/polaris_software/blob/master/notebook/atmospheric%20plot.ipynb)
 ![atmospheric_plot](https://github.com/arikaplan/polaris_software/assets/8053891/342b4f4d-1ea7-4c4f-855f-4189463d073d)
 
 
 Sky dip method used for calibrating instrument using elevation dependent atmospheric emission:
-(https://github.com/arikaplan/polaris_software/blob/master/notebook/Sky_dip.ipynb)
+([Sky_dip.ipynb]https://github.com/arikaplan/polaris_software/blob/master/notebook/Sky_dip.ipynb)
 <img width="626" alt="image" src="https://github.com/arikaplan/polaris_software/assets/8053891/04aa32f5-6cce-4fad-89b7-b573114f97b6">
 
-Measuring the rise and fall of crab nebula through our rotating beam, then binning to celestial coordinates to measure offsets in our pointing calibration (https://github.com/arikaplan/polaris_software/blob/master/notebook/pointing_cal.ipynb)
+Measuring the rise and fall of crab nebula through our rotating beam, then binning to celestial coordinates to measure offsets in our pointing calibration ([pointing_cal.ipynb]https://github.com/arikaplan/polaris_software/blob/master/notebook/pointing_cal.ipynb)
 
 <img width="503" alt="image" src="https://github.com/arikaplan/polaris_software/assets/8053891/96ad8529-9ca2-443a-9a56-b62882f3d9e4">
 <img width="550" alt="image" src="https://github.com/arikaplan/polaris_software/assets/8053891/477a8b75-1d67-4b84-b6dd-883d796b1f1d">
 
-Mapping polarized galactic foregrounds after passing raw data through analysis pipeline(demodulation into polarization states, data structuring, data cleaning, destriping low frequency correlated noise) as well as producing angular power spectrum for maps. Due to low integration time these maps were consistent with a white noise power spectrum ([notebook/mapmaking.ipynb](https://github.com/arikaplan/polaris_software/blob/master/notebook/mapmaking.ipynb))
+Mapping polarized galactic foregrounds after passing raw data through analysis pipeline(demodulation into polarization states, data structuring, data cleaning, destriping low frequency correlated noise) as well as producing angular power spectrum for maps. Due to low integration time these maps were consistent with a white noise power spectrum ([mapmaking.ipynb](https://github.com/arikaplan/polaris_software/blob/master/notebook/mapmaking.ipynb))
 
 <img width="579" alt="image" src="https://github.com/arikaplan/polaris_software/assets/8053891/bd4c30f9-8c35-4bc8-807c-3383d1c184e8">
 <img width="579" alt="image" src="https://github.com/arikaplan/polaris_software/assets/8053891/276b1eda-0ef2-43e3-b2fa-a70ef728da0a">
