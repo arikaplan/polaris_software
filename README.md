@@ -38,6 +38,7 @@ Atmospheric emmission modeled with ATMOS32 and plotted against foreground spectr
 
 Sky dip method used for calibrating instrument using elevation dependent atmospheric emission:
 ([notebook/Sky_dip.ipynb](https://github.com/arikaplan/polaris_software/blob/master/notebook/Sky_dip.ipynb))
+
 <img width="626" alt="image" src="https://github.com/arikaplan/polaris_software/assets/8053891/04aa32f5-6cce-4fad-89b7-b573114f97b6">
 
 Measuring the rise and fall of crab nebula through our rotating beam, then binning to celestial coordinates to measure offsets in our pointing calibration ([notebook/pointing_cal.ipynb](https://github.com/arikaplan/polaris_software/blob/master/notebook/pointing_cal.ipynb))
